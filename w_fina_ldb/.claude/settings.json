@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"success.*true.*Login successful\" /Users/mac/project_web_of_fina/lbb_fina_kyc/w_fina_ldb/../server 2>/dev/null | head -20)",
+      "Read(//Users/mac/project_web_of_fina/lbb_fina_kyc/server/**)"
+    ]
+  }
+}

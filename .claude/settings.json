@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Read(//private/tmp/claude-501/-Users-mac-project_web_of-fina-lbb-fina-kyc/198da2b0-d316-45a8-9bd4-bf8133cf952e/tasks/**)"
+    ]
+  }
+}

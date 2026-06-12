@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/mac/project_web_of_fina/lbb_fina_kyc -type f -name \"*.json\" -o -name \"*.js\" -o -name \"*.ts\" -o -name \"*.md\" -o -name \"Dockerfile\" -o -name \"docker-compose.yml\" | head -100)",
+      "Read(//Users/mac/project_web_of_fina/lbb_fina_kyc/**)",
+      "Bash(ls -la /Users/mac/project_web_of_fina/lbb_fina_kyc/)",
+      "Bash(mkdir -p config/multer utils controllers)",
+      "Bash(npm install *)",
+      "Bash(node -c controllers/applicants.js)",
+      "Bash(node -c controllers/authen_user.js)",
+      "Bash(node -c controllers/employee.js)",
+      "Bash(node -c controllers/follow_applicant.js)",
+      "Bash(node -c middlewares/authCheck.js)",
+      "Bash(node -c server.js)",
+      "Bash(PORT=8001 timeout 10 npm start)"
+    ],
+    "additionalDirectories": [
+      "/Users/mac/project_web_of_fina/lbb_fina_kyc/server/config"
+    ]
+  }
+}

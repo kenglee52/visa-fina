@@ -1,0 +1,38 @@
+services:
+  # 1. Database (MySQL)
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: visa_kyc
+      MYSQL_ROOT_PASSWORD: P@ssword2026
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  # 2. Backend (Node.js API)
+  backend:
+    build: ./server           # ປ່ຽນໃຫ້ຊີ້ເຂົ້າໄປຫາ folder server
+    container_name: visa_kyc_api
+    restart: always
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./server/.env         # ປ່ຽນໃຫ້ຊີ້ເຂົ້າໄປຫາ .env ໃນ folder server
+    depends_on:
+      - db
+
+  # 3. Frontend (Vite Web App)
+  frontend:
+    build: ./w_fina_ldb       # ປ່ຽນເປັນ ./ ເພາະຢູ່ລະດັບດຽວກັນແລ້ວ
+    container_name: visa_kyc_web
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
