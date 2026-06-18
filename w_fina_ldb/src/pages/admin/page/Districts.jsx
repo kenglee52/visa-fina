@@ -2,6 +2,7 @@
  * Districts Management Page (Refactored)
  * CRUD operations for districts using senior-level React patterns
  */
+import { API_BASE_URL } from '@/config/env.config';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,7 @@ const Districts = () => {
       // Note: This assumes there's a GET all districts endpoint
       // If not, you might need to get all districts grouped by province
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://192.168.100.41:8001'}/api/districts`, {
+      const response = await fetch(`${API_BASE_URL}/api/districts`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();

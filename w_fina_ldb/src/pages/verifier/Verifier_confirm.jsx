@@ -10,7 +10,9 @@ import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isToday } from 'date-fns';
 import { RefreshCcw } from 'lucide-react';
+import { API_BASE_URL } from '@/config/env.config';
 import 'sweetalert2/dist/sweetalert2.min.css';
+
 
 const Verifier_confirm = () => {
   const navigate = useNavigate();
@@ -43,7 +45,7 @@ const Verifier_confirm = () => {
       const statuses = statusFilter === 'both' ? ['in_progress', 'rejected'] : [statusFilter];
 
       for (const status of statuses) {
-        const response = await axios.get(`${url.base_url}/api/follow-report`, {
+        const response = await axios.get(`${API_BASE_URL}/api/follow-report`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Cache-Control': 'no-cache',
@@ -176,7 +178,7 @@ const Verifier_confirm = () => {
       const token = localStorage.getItem('token');
       const endpoint = status === 'checked' ? '/api/check_document' : '/api/reject_document';
       const response = await axios.put(
-        `${url.base_url}${endpoint}`,
+        `${API_BASE_URL}${endpoint}`,
         { applicant_id, ...(status === 'rejected' && { feedback }) },
         { headers: { Authorization: `Bearer ${token}` } }
       );

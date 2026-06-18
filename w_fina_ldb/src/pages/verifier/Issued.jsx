@@ -10,6 +10,7 @@ import { RefreshCcw } from 'lucide-react'; // Added RefreshCcw import for reload
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isToday } from 'date-fns';
+import { API_BASE_URL } from '@/config/env.config';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
 const Issued = () => {
@@ -29,7 +30,7 @@ const Issued = () => {
       if (!token) throw new Error('ກະລຸນາເຂົ້າສູ່ລະບົບກ່ອນ');
 
       const limit = 10;
-      const response = await axios.get(`${url.base_url}/api/follow-report`, {
+      const response = await axios.get(`${API_BASE_URL}/api/follow-report`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
@@ -122,7 +123,7 @@ const Issued = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(
-        `${url.base_url}/api/issued`,
+        `${API_BASE_URL}/api/issued`,
         { applicant_id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -167,7 +168,7 @@ const Issued = () => {
           try {
             const token = localStorage.getItem('token');
             await axios.put(
-              `${url.base_url}/api/update_fina_ctm_key`,
+              `${API_BASE_URL}/api/update_fina_ctm_key`,
               { applicant_id, fina_ctm_key },
               { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -273,7 +274,7 @@ const Issued = () => {
     const filesList = applicant.files?.length > 0
       ? applicant.files.map(file => `
           <li>
-            <a href="${url.base_url}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+            <a href="${API_BASE_URL}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
               ${formatFileType(file.file_type)}
             </a>
           </li>
@@ -388,7 +389,7 @@ const Issued = () => {
                           {applicant.files.map((file, fileIndex) => (
                             <a
                               key={fileIndex}
-                              href={`${url.base_url}/${file.file_path}`}
+                              href={`${API_BASE_URL}/${file.file_path}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:underline"

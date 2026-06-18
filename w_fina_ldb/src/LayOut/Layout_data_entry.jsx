@@ -1,20 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ClipboardList, Briefcase, User, LogOut } from 'lucide-react';
+import { ClipboardList, Briefcase, User, LogOut, Menu, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 const ConfirmLogoutDialog = ({ open, onConfirm, onCancel }) => {
-  useEffect(() => {
-    console.log('ConfirmLogoutDialog rendered with open:', open);
-  }, [open]);
-
   const handleOpenChange = (isOpen) => {
-    console.log('Dialog open state changed to:', isOpen);
-    if (!isOpen) {
-      console.log('X button or Escape key triggered, calling onCancel');
-      onCancel();
-    }
+    if (!isOpen) onCancel();
   };
 
   return (
@@ -29,22 +21,14 @@ const ConfirmLogoutDialog = ({ open, onConfirm, onCancel }) => {
         <DialogFooter className="flex justify-end gap-2">
           <Button
             variant="outline"
-            onClick={() => {
-              console.log('Cancel button clicked');
-              onCancel();
-            }}
-            className="h-10 px-6 border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors duration-200 font-noto-sans-lao"
-            aria-label="ຍົກເລີກ"
+            onClick={onCancel}
+            className="h-10 px-6 border-gray-300 text-gray-700 hover:bg-gray-100 font-noto-sans-lao"
           >
             ຍົກເລີກ
           </Button>
           <Button
-            onClick={() => {
-              console.log('Confirm logout button clicked');
-              onConfirm();
-            }}
-            className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200 active:scale-95 font-noto-sans-lao"
-            aria-label="ອອກຈາກລະຬົບ"
+            onClick={onConfirm}
+            className="h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white font-noto-sans-lao"
           >
             ອອກຈາກລະບົບ
           </Button>
@@ -61,7 +45,6 @@ const UserDropdown = ({ userName, onLogout }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        console.log('Clicked outside, closing dropdown');
         setIsOpen(false);
       }
     };
@@ -72,29 +55,18 @@ const UserDropdown = ({ userName, onLogout }) => {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => {
-          console.log('User button clicked, isOpen:', !isOpen);
-          setIsOpen(!isOpen);
-        }}
-        className="flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all duration-200 transform hover:scale-105 hover:bg-gray-100 text-blue-800 focus:outline-none"
-        aria-expanded={isOpen}
-        aria-controls="user-dropdown"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-4 py-2 rounded-full text-base font-semibold transition-all duration-200 hover:bg-gray-100 text-blue-800 focus:outline-none"
       >
         <User size={20} />
         <span>{userName}</span>
       </button>
       {isOpen && (
-        <div
-          id="user-dropdown"
-          className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-[1000] transition-all duration-200 ease-in-out transform origin-top-right"
-        >
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-[1000]">
           <button
             type="button"
-            onClick={() => {
-              console.log('Logout button clicked');
-              onLogout();
-            }}
-            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+            onClick={onLogout}
+            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
           >
             <LogOut size={16} />
             <span>ອອກຈາກລະບົບ <span className="text-red-600">*</span></span>
@@ -109,50 +81,41 @@ const Layout_data_entry = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('ບັນຊີຜູ້ໃຊ້');
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // ເພີ່ມ state hamburger
 
   useEffect(() => {
     const employee = JSON.parse(localStorage.getItem('employee'));
     if (employee && employee.name) {
-      console.log('Employee loaded from localStorage:', employee);
       setUserName(employee.name);
     }
   }, []);
 
-  const handleLogout = () => {
-    console.log('handleLogout called, opening dialog');
-    setIsLogoutDialogOpen(true);
-  };
-
+  const handleLogout = () => setIsLogoutDialogOpen(true);
   const confirmLogout = () => {
-    console.log('confirmLogout called, clearing localStorage and redirecting');
     localStorage.removeItem('employee');
     localStorage.removeItem('token');
     setIsLogoutDialogOpen(false);
     navigate('/');
   };
-
-  const cancelLogout = () => {
-    console.log('cancelLogout called, closing dialog');
-    setIsLogoutDialogOpen(false);
-  };
+  const cancelLogout = () => setIsLogoutDialogOpen(false);
 
   return (
     <div className="flex flex-col min-h-screen font-noto-sans-lao bg-blue-50">
-      {/* Navbar with two logos */}
       <nav className="bg-white shadow-xl sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Left Section: Logos */}
+
+          {/* ຊ້າຍ: Logos */}
           <div className="flex items-center space-x-4">
             <img src="/fina.png" alt="Fina Logo" className="h-10 w-auto" />
             <img src="/im1.png" alt="LDB Logo" className="h-10 w-auto" />
           </div>
 
-          {/* Right Section: Navigation Buttons */}
-          <div className="flex items-center space-x-6">
+          {/* ຂວາ Desktop: ສະແດງເມື່ອໜ້າຈໍໃຫຍ່ */}
+          <div className="hidden md:flex items-center space-x-6">
             <NavLink
               to="applicants"
               className={({ isActive }) =>
-                `flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all duration-200 transform hover:scale-105
+                `flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all duration-200 hover:scale-105
                 ${isActive ? 'bg-orange-500 text-white shadow-lg' : 'text-blue-800 hover:bg-orange-100'}`
               }
             >
@@ -163,7 +126,7 @@ const Layout_data_entry = () => {
             <NavLink
               to="status"
               className={({ isActive }) =>
-                `flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all duration-200 transform hover:scale-105
+                `flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all duration-200 hover:scale-105
                 ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-800 hover:bg-blue-100'}`
               }
             >
@@ -173,15 +136,70 @@ const Layout_data_entry = () => {
 
             <UserDropdown userName={userName} onLogout={handleLogout} />
           </div>
+
+          {/* ຂວາ Mobile: Hamburger button */}
+          <div className="flex md:hidden">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-md text-blue-800 hover:bg-gray-100 focus:outline-none"
+            >
+              {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-100 px-4 pb-4 space-y-2">
+            <NavLink
+              to="applicants"
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-all
+                ${isActive ? 'bg-orange-500 text-white' : 'text-blue-800 hover:bg-orange-100'}`
+              }
+            >
+              <ClipboardList size={20} />
+              <span>ປ້ອນຂໍ້ມູນເອກກະສານ</span>
+            </NavLink>
+
+            <NavLink
+              to="status"
+              onClick={() => setMobileMenuOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-all
+                ${isActive ? 'bg-blue-600 text-white' : 'text-blue-800 hover:bg-blue-100'}`
+              }
+            >
+              <Briefcase size={20} />
+              <span>ຕິດຕາມສະຖານະເອກກະສານ</span>
+            </NavLink>
+
+            {/* User + Logout ໃນ mobile */}
+            <div className="border-t border-gray-100 pt-2">
+              <div className="flex items-center gap-2 px-4 py-2 text-blue-800 font-semibold">
+                <User size={18} />
+                <span>{userName}</span>
+              </div>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-xl"
+              >
+                <LogOut size={16} />
+                <span>ອອກຈາກລະບົບ</span>
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
-      {/* Main Content Area */}
       <main className="flex-1 container mx-auto p-4 sm:p-8">
         <Outlet />
       </main>
 
-      {/* Confirm Logout Dialog */}
       <ConfirmLogoutDialog
         open={isLogoutDialogOpen}
         onConfirm={confirmLogout}

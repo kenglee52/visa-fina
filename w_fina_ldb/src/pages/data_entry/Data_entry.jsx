@@ -24,6 +24,7 @@ import { useConfirmDialog } from '@/hooks/ui/useConfirmDialog';
 import { applicantAPI } from '@/api/applicant.api';
 import { documentAPI } from '@/api/document.api';
 import { locationAPI } from '@/api/location.api';
+import DatePicker from 'react-datepicker';
 
 // Constants
 import {
@@ -706,7 +707,7 @@ const DataEntry = () => {
                   required
                   disabled={isSubmitting}
                   className="h-10"
-                  placeholder="dd/mm/yyyy"
+                  placeholder="yyyy/mm/dd"
                 />
                 {errors.expiry_date && (
                   <p className="text-sm text-red-600">{errors.expiry_date}</p>

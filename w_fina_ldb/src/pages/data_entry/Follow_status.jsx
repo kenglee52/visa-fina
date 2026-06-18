@@ -13,6 +13,7 @@ import DatePicker from 'react-datepicker';
 import { RefreshCcw, X } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import { API_BASE_URL } from '@/config/env.config';
 
 const FollowStatus = () => {
   const navigate = useNavigate();
@@ -65,7 +66,7 @@ const FollowStatus = () => {
       if (dateTo) params.date_to = format(dateTo, 'yyyy-MM-dd');
 
       console.log('Fetching reports with params:', params);
-      const response = await axios.get(`${url.base_url}/api/follow-report`, {
+      const response = await axios.get(`${API_BASE_URL}/api/follow-report`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
@@ -204,7 +205,7 @@ const FollowStatus = () => {
     const filesList = report.files?.length > 0
       ? report.files.map(file => `
           <li>
-            <a href="${url.base_url}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+            <a href="${API_BASE_URL}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
               ${formatFileType(file.file_type)}
             </a>
           </li>

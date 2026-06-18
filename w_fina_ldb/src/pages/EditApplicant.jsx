@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { API_BASE_URL } from '@/config/env.config';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   AlertDialog,
@@ -170,7 +171,7 @@ const EditApplicant = () => {
       setIsLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${url.base_url}/api/applicant/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/api/applicant/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const { applicant, documents } = response.data.data || {};
@@ -200,14 +201,14 @@ const EditApplicant = () => {
         });
 
         // Fetch provinces
-        const provincesResponse = await axios.get(`${url.base_url}/api/provinces`, {
+        const provincesResponse = await axios.get(`${API_BASE_URL}/api/provinces`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProvinces(provincesResponse.data.data?.provinces || []);
 
         // Fetch districts if province exists
         if (applicant.province_id) {
-          const districtsResponse = await axios.get(`${url.base_url}/api/districts/${applicant.province_id}`, {
+          const districtsResponse = await axios.get(`${API_BASE_URL}/api/districts/${applicant.province_id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           setDistricts(districtsResponse.data.data?.districts || []);
@@ -283,7 +284,7 @@ const EditApplicant = () => {
     setIsDeleteConfirmOpen(false);
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${url.base_url}/api/delete-document/${id}/${fileToDelete}`, {
+      await axios.delete(`${API_BASE_URL}/api/delete-document/${id}/${fileToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDocuments((prev) => ({ ...prev, [fileToDelete]: null }));
@@ -310,7 +311,7 @@ const EditApplicant = () => {
       try {
         setIsLoading(true);
         const token = localStorage.getItem('token');
-        const response = await axios.get(`${url.base_url}/api/districts/${value}`, {
+        const response = await axios.get(`${API_BASE_URL}/api/districts/${value}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setDistricts(response.data.data?.districts || []);
@@ -419,7 +420,7 @@ const EditApplicant = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`${url.base_url}/api/update-applicant/${id}`, data, {
+      const response = await axios.put(`${API_BASE_URL}/api/update-applicant/${id}`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
@@ -431,7 +432,7 @@ const EditApplicant = () => {
         registration_form_credit_card: null,
         registration_form_gif_fina: null,
       });
-      const updatedResponse = await axios.get(`${url.base_url}/api/applicant/${id}`, {
+      const updatedResponse = await axios.get(`${API_BASE_URL}/api/applicant/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDocuments(updatedResponse.data.data?.documents || {
@@ -758,7 +759,7 @@ const EditApplicant = () => {
                 {documents.customer_request_form && (
                   <div className="flex items-center space-x-2 mt-1">
                     <a
-                      href={`${url.base_url}/${documents.customer_request_form}`}
+                      href={`${API_BASE_URL}/${documents.customer_request_form}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline text-sm truncate"
@@ -790,7 +791,7 @@ const EditApplicant = () => {
                 {documents.request_earmark_account && (
                   <div className="flex items-center space-x-2 mt-1">
                     <a
-                      href={`${url.base_url}/${documents.request_earmark_account}`}
+                      href={`${API_BASE_URL}/${documents.request_earmark_account}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline text-sm truncate"
@@ -823,7 +824,7 @@ const EditApplicant = () => {
                 {documents.registration_form_credit_card && (
                   <div className="flex items-center space-x-2 mt-1">
                     <a
-                      href={`${url.base_url}/${documents.registration_form_credit_card}`}
+                      href={`${API_BASE_URL}/${documents.registration_form_credit_card}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline text-sm truncate"
@@ -859,7 +860,7 @@ const EditApplicant = () => {
                 {documents.registration_form_gif_fina && (
                   <div className="flex items-center space-x-2 mt-1">
                     <a
-                      href={`${url.base_url}/${documents.registration_form_gif_fina}`}
+                      href={`${API_BASE_URL}/${documents.registration_form_gif_fina}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline text-sm truncate"

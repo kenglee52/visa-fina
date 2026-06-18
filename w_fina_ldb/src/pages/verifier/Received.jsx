@@ -10,6 +10,7 @@ import { RefreshCcw } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isToday } from 'date-fns';
+import { API_BASE_URL } from '@/config/env.config';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
 const Received = () => {
@@ -30,7 +31,7 @@ const Received = () => {
       if (!token) throw new Error('ກະລຸນາເຂົ້າສູ່ລະບົບກ່ອນ');
 
       const limit = 10;
-      const response = await axios.get(`${url.base_url}/api/follow-report`, {
+      const response = await axios.get(`${API_BASE_URL}/api/follow-report`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
@@ -56,7 +57,7 @@ const Received = () => {
 
       setApplicants(paginatedApplicants);
       setTotalPages(calculatedTotalPages);
-      setSelectedApplicants(prev => prev.filter(id => 
+      setSelectedApplicants(prev => prev.filter(id =>
         paginatedApplicants.some(applicant => applicant.applicant_id === id)
       ));
     } catch (err) {
@@ -162,7 +163,7 @@ const Received = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.post(
-          `${url.base_url}/api/confirm-received`,
+          `${API_BASE_URL}/api/confirm-received`,
           {
             applicant_ids: selectedApplicants,
             receiver_id: formValues.receiverId,
@@ -186,6 +187,9 @@ const Received = () => {
         fetchApplicants();
       } catch (err) {
         console.error('Error confirming receipt:', err);
+        console.log('Status:', err.response?.status);           // 403
+        console.log('Message:', err.response?.data?.message);  // ເຫດຜົນຈາກ server
+        console.log('Data:', err.response?.data);
         Swal.fire({
           icon: 'error',
           title: 'ຂໍ້ຜິດພາດ',
@@ -254,7 +258,7 @@ const Received = () => {
     const filesList = applicant.files?.length > 0
       ? applicant.files.map(file => `
           <li>
-            <a href="${url.base_url}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+            <a href="${API_BASE_URL}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
               ${formatFileType(file.file_type)}
             </a>
           </li>
@@ -356,11 +360,11 @@ const Received = () => {
                     <TableHead className="font-bold text-black">ບ້ານ</TableHead>
                     <TableHead className="font-bold text-black">ເມືອງ</TableHead>
                     <TableHead className="font-bold text-black">ແຂວງ</TableHead>
-                   
+
                     <TableHead className="font-bold text-black">ເອກະສານ</TableHead>
                     <TableHead className="font-bold text-black">ສະຖານະ</TableHead>
                     <TableHead className="font-bold text-black">ວັນທີ່ອັບເດດ</TableHead>
-                    
+
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -387,7 +391,7 @@ const Received = () => {
                       <TableCell className="text-black">{applicant.village || '-'}</TableCell>
                       <TableCell className="text-black">{applicant.district_name || '-'}</TableCell>
                       <TableCell className="text-black">{applicant.province_name || '-'}</TableCell>
-             
+
                       <TableCell>
                         {applicant.files?.length > 0 ? (
                           <div className="flex flex-col space-y-2">

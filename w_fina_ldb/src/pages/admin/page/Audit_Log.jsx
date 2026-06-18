@@ -3,7 +3,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { url } from '@/componet/unity/Part';
 import 'sweetalert2/dist/sweetalert2.min.css';
-
+import { API_BASE_URL } from '@/config/env.config';
 const actionOptions = [
   { value: '', label: '-- ເລືອກການກະທຳ --' },
   { value: 'check_document', label: 'ກວດເອກະສານ' },
@@ -57,7 +57,7 @@ const Audit_Log = () => {
     }
 
     axios
-      .get(`${url.base_url}/api/log-report`, {
+      .get(`${API_BASE_URL}/api/log-report`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { ...filters, page, limit },
       })

@@ -1,0 +1,10 @@
+# Dependencies ທຸກ folder
+**/node_modules/
+
+# Environment files
+**/.env
+**/.env.local
+
+# OS
+.DS_Store
+Thumbs.db

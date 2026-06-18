@@ -163,7 +163,7 @@ export const INPUT_LABELS = {
   // Personal Info
   NAME: 'ຊື່',
   SURNAME: 'ນາມສະກຸນ',
-  DOB: 'ວັນທີເດືອນດຳ',
+  DOB: 'ວັນເດືອນປີເກີດ',
   VILLAGE: 'ບ້ານ',
   GENDER: 'ເພດ',
   RELATIONSHIP_STATUS: 'ສະຖານະ',

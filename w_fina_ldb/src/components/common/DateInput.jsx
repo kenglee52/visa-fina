@@ -2,8 +2,10 @@
  * DateInput Component
  * Reusable date input with validation and formatting
  */
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, forwardRef } from 'react';
 import { Calendar } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import { INPUT_LABELS } from '@/config/constants';
 
 const DateInput = ({
@@ -14,122 +16,116 @@ const DateInput = ({
   required = false,
   disabled = false,
   label,
-  placeholder = 'ວັນທີ/ເດືອນ/ປີ',
+  placeholder = 'dd/mm/yyyy',
   className = '',
 }) => {
-  const inputRef = useRef(null);
-  const [displayValue, setDisplayValue] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
 
-  // Format date from YYYY-MM-DD to DD/MM/YYYY for display
-  useEffect(() => {
-    if (value && !isFocused) {
-      if (value.includes('-')) {
-        const [year, month, day] = value.split('-');
-        setDisplayValue(`${day}/${month}/${year}`);
-      } else if (value.includes('/')) {
-        setDisplayValue(value);
+  const [open, setOpen] = useState(false);
+
+  const toDate = (val) => {
+    if (!val) return null;
+    const d = new Date(val);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const handlePickerChange = (date) => {
+    if (!date) {
+      onChange({ target: { name, value: '' } });
+      setOpen(false);
+      return;
+    }
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    onChange({ target: { name, value: `${yyyy}-${mm}-${dd}` } });
+    setOpen(false);
+  };
+
+  const handleTyping = (e) => {
+    let raw = e.target.value.replace(/\D/g, '');
+    if (raw.length > 2) raw = raw.slice(0, 2) + '/' + raw.slice(2);
+    if (raw.length > 5) raw = raw.slice(0, 5) + '/' + raw.slice(5, 9);
+
+    if (raw.length === 10) {
+      const [dd, mm, yyyy] = raw.split('/');
+      const date = new Date(`${yyyy}-${mm}-${dd}`);
+      if (!isNaN(date.getTime())) {
+        onChange({ target: { name, value: `${yyyy}-${mm}-${dd}` } });
+        return;
       }
     }
-  }, [value, isFocused]);
-
-  // Parse date from DD/MM/YYYY to YYYY-MM-DD
-  const parseDate = (input) => {
-    if (!input) return '';
-
-    // Remove non-numeric characters
-    const clean = input.replace(/\D/g, '');
-
-    if (clean.length !== 8) return input;
-
-    const day = clean.substring(0, 2);
-    const month = clean.substring(2, 4);
-    const year = clean.substring(4, 8);
-
-    return `${year}-${month}-${day}`;
+    onChange({ target: { name, value: raw } });
   };
 
-  const handleFocus = () => {
-    setIsFocused(true);
-    // Show raw value on focus
-    if (value) {
-      setDisplayValue(value);
+  const displayValue = () => {
+    if (!value) return '';
+    if (value.includes('-') && value.length === 10) {
+      const [yyyy, mm, dd] = value.split('-');
+      return `${dd}/${mm}/${yyyy}`;
     }
+    return value;
   };
 
-  const handleBlur = () => {
-    setIsFocused(false);
-    // Format value on blur
-    if (displayValue) {
-      const parsed = parseDate(displayValue);
-      setDisplayValue(parsed);
+  const CustomInput = forwardRef((props, ref) => (
+    <div className="relative w-full" ref={ref}>
+      <input
+        type="text"
+        value={displayValue()}
+        onChange={handleTyping}
+        disabled={disabled}
+        placeholder={placeholder}
+        maxLength={10}
+        className={`
+          w-full h-10 border rounded-md px-3 pr-10 text-sm bg-white
+          focus:outline-none focus:ring-2 focus:ring-blue-500
+          disabled:bg-gray-100 disabled:cursor-not-allowed
+          ${error ? 'border-red-500' : 'border-gray-300'}
+          ${disabled ? 'text-gray-400' : 'text-gray-900'}
+          ${className}
+        `}
+      />
+      <button
+        type="button"
+        onClick={() => !disabled && setOpen(true)}
+        disabled={disabled}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 disabled:cursor-not-allowed"
+      >
+        <Calendar size={16} />
+      </button>
+    </div>
+  ));
 
-      // Trigger onChange with parsed date
-      onChange({
-        target: { name, value: parsed },
-      });
-    }
-  };
-
-  const handleChange = (e) => {
-    const inputValue = e.target.value;
-
-    // Allow formatting while typing: DD/MM/YYYY
-    let formatted = inputValue.replace(/\D/g, '');
-
-    if (formatted.length > 0) {
-      if (formatted.length > 2) {
-        formatted = formatted.substring(0, 2) + '/' + formatted.substring(2);
-      }
-      if (formatted.length > 5) {
-        formatted = formatted.substring(0, 5) + '/' + formatted.substring(5, 9);
-      }
-    }
-
-    setDisplayValue(formatted);
-  };
-
-  const openDatePicker = () => {
-    inputRef.current?.showPicker();
-  };
+  CustomInput.displayName = 'CustomInput';
 
   return (
-    <div className={`relative ${className}`}>
+    <div className="w-full">
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
-      <div className="relative">
-        <input
-          ref={inputRef}
-          type="text"
-          name={name}
-          value={displayValue}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          disabled={disabled}
-          placeholder={placeholder}
-          className={`
-            w-full h-12 border-2 rounded-md px-4 py-2 text-lg
-            focus:outline-none focus:ring-2 focus:ring-blue-500
-            disabled:bg-gray-100 disabled:cursor-not-allowed
-            ${error ? 'border-red-500' : 'border-blue-500'}
-            ${disabled ? 'text-gray-400' : 'text-gray-900'}
-          `}
-        />
-        <button
-          type="button"
-          onClick={openDatePicker}
-          disabled={disabled}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-600 disabled:text-gray-300 disabled:cursor-not-allowed"
-        >
-          <Calendar size={20} />
-        </button>
-      </div>
+
+      {/* ແກ້ DatePicker wrapper ໃຫ້ w-full */}
+      <style>{`.react-datepicker-wrapper { width: 100% !important; } .react-datepicker__input-container { width: 100% !important; }`}</style>
+
+      <DatePicker
+        selected={toDate(value)}
+        onChange={handlePickerChange}
+        dateFormat="dd/MM/yyyy"
+        disabled={disabled}
+        required={required}
+        customInput={<CustomInput />}
+        open={open}
+        onClickOutside={() => setOpen(false)}
+        showYearDropdown
+        showMonthDropdown
+        dropdownMode="select"
+        yearDropdownItemNumber={80}
+        scrollableYearDropdown
+        popperPlacement="bottom-start"
+      />
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <p className="text-sm text-red-600 mt-1">{error}</p>
       )}
     </div>
   );

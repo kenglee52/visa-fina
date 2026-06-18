@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# Uploads / images
+product_image/
+
+# Logs
+*.log
+
+# OS
+.DS_Store

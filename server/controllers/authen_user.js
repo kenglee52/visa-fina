@@ -10,11 +10,11 @@ const logger = require('../utils/logger');
  */
 exports.register = async (req, res) => {
   try {
-    const { id, name, last_name, role, password } = req.body;
+    const { id, name, last_name,email, role, password } = req.body;
 
-    logger.debug('Register request:', { id, name, last_name, role });
+    logger.debug('Register request:', { id, name, last_name, email, role });
 
-    if (!id || !name || !last_name || !role || !password) {
+    if (!id || !name || !last_name ||!email || !role || !password) {
       return badRequest(res, ERROR_MESSAGES.MISSING_FIELDS);
     }
 
@@ -33,15 +33,15 @@ exports.register = async (req, res) => {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const insertQuery = 'INSERT INTO employees (id, name, last_name, role, password) VALUES (?, ?, ?, ?, ?)';
+      const insertQuery = 'INSERT INTO employees (id, name, last_name, email, role, password) VALUES (?, ?, ?, ?, ?, ?)';
 
-      db.query(insertQuery, [id, name, last_name, role, hashedPassword], (err, result) => {
+      db.query(insertQuery, [id, name, last_name, email, role, hashedPassword], (err, result) => {
         if (err) {
           logger.error('Error registering employee:', err);
           return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
         }
         return created(res, SUCCESS_MESSAGES.EMPLOYEE_REGISTERED, {
-          employee: { id, name, last_name, role }
+          employee: { id, name, last_name, email, role }
         });
       });
     });
