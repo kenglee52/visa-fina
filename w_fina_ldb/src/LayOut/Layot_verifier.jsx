@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { ClipboardList, Briefcase, User, LogOut,CreditCard,ClipboardPenLine ,FileClock} from 'lucide-react';
+import { ClipboardList, Briefcase, User, LogOut,CreditCard,ClipboardPenLine ,FileClock, Menu, X} from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
@@ -77,6 +77,7 @@ const Layout_verifier = () => {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('ບັນຊີຜູ້ໃຊ້');
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // ເພີ່ມ
 
   useEffect(() => {
     const employee = JSON.parse(localStorage.getItem('employee'));
@@ -108,7 +109,7 @@ const Layout_verifier = () => {
             <img src="/im1.png" alt="LDB Logo" className="h-10 w-auto" />
           </div>
 
-          <div className="flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-6">
             <NavLink
               to="verifie-check"
               className={({ isActive }) =>
@@ -143,7 +144,68 @@ const Layout_verifier = () => {
              
             <UserDropdown userName={userName} onLogout={handleLogout} />
           </div>
+          <div className="md:hidden">
+            <button onClick={()=> setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-md text-blue-800 hover: bg-gray-100 focus: outline-none"
+            >
+              {mobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            </button>
+          </div>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-100 px-4 pb-4 space-y-2">
+            <NavLink
+              to="verifie-check"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all duration-200 transform hover:scale-105
+                ${isActive ? 'bg-orange-500 text-white shadow-lg' : 'text-blue-800 hover:bg-orange-100'}`
+              }
+            >
+              <ClipboardList size={20} />
+              <span>ກວດສອບເອກະສານ</span>
+            </NavLink>
+
+            <NavLink
+              to="verifie-issued"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all duration-200 transform hover:scale-105
+                ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-800 hover:bg-blue-100'}`
+              }
+            >
+              <CreditCard size={20} />
+              <span>ອອກບັດ VISA</span>
+            </NavLink>
+             <NavLink
+              to="verifie-received"
+              className={({ isActive }) =>
+                `flex items-center gap-2 px-6 py-3 rounded-full text-base font-semibold transition-all duration-200 transform hover:scale-105
+                ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-800 hover:bg-blue-100'}`
+              }
+            >
+              <ClipboardPenLine size={20} />
+              <span>ມາຣັບເອົາບັດ VISA</span>
+            </NavLink>
+
+            {/* User + Logout ໃນ mobile */}
+            <div className="border-t border-gray-100 pt-2">
+              <div className="flex items-center gap-2 px-4 py-2 text-blue-800 font-semibold">
+                <User size={18} />
+                <span>{userName}</span>
+              </div>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-xl"
+              >
+                <LogOut size={16} />
+                <span>ອອກຈາກລະບົບ</span>
+              </button>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="flex-1 container mx-auto p-4 sm:p-8">
