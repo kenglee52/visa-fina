@@ -1,12 +1,11 @@
-// Frontend: Issued.jsx (updated with search by applicant_id and reload button)
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { url } from '@/componet/unity/Part';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input"; // Added Input import
-import { RefreshCcw } from 'lucide-react'; // Added RefreshCcw import for reload icon
+import { Input } from "@/components/ui/input";
+import { RefreshCcw } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isToday } from 'date-fns';
@@ -20,7 +19,22 @@ const Issued = () => {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState(''); // Added state for search term
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isVerifier, setIsVerifier] = useState(false); // ເພີ່ມ state ກວດສອບ role
+
+  // ກວດສອບ role ຈາກ JWT token
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        // ປ່ຽນ payload.role ໃຫ້ຕົງກັບ field ໃນ JWT ຂອງທ່ານ
+        setIsVerifier(payload.role === 'verifier');
+      } catch {
+        setIsVerifier(false);
+      }
+    }
+  }, []);
 
   const fetchApplicants = useCallback(async () => {
     setLoading(true);
@@ -35,14 +49,13 @@ const Issued = () => {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
         },
-        params: { page, limit, status: 'checked', applicant_id: searchTerm || undefined }, // Added applicant_id to query params
+        params: { page, limit, status: 'checked', applicant_id: searchTerm || undefined },
       });
 
       console.log('API Response for checked:', response.data);
       const fetchedApplicants = response.data.data || [];
       const total = response.data.total || 0;
 
-      // Sort applicants by updated_at, prioritizing today's updates
       const sortedApplicants = fetchedApplicants.sort((a, b) => {
         const aIsToday = a.updated_at && isToday(parseISO(a.updated_at));
         const bIsToday = b.updated_at && isToday(parseISO(b.updated_at));
@@ -51,7 +64,6 @@ const Issued = () => {
         return new Date(b.updated_at) - new Date(a.updated_at);
       });
 
-      // Paginate the results
       const startIndex = (page - 1) * limit;
       const paginatedApplicants = sortedApplicants.slice(startIndex, startIndex + limit);
       const calculatedTotalPages = Math.ceil(total / limit) || 1;
@@ -64,7 +76,7 @@ const Issued = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm]); // Added searchTerm to dependencies
+  }, [page, searchTerm]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -100,12 +112,15 @@ const Issued = () => {
   }, [error]);
 
   const handleRefresh = () => {
-    setSearchTerm(''); // Clear search term
-    setPage(1); // Reset to first page
-    fetchApplicants(); // Trigger data refresh
+    setSearchTerm('');
+    setPage(1);
+    fetchApplicants();
   };
 
   const handleStatusUpdate = async (applicant_id, status) => {
+    // ກວດສອບ role ກ່ອນດຳເນີນການ
+    if (!isVerifier) return;
+
     const result = await Swal.fire({
       icon: 'question',
       title: 'ຢືນຢັນອອກບັດ',
@@ -173,7 +188,6 @@ const Issued = () => {
               { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            // Retry issuing after updating fina_ctm_key
             const retryResponse = await axios.put(
               `${url.base_url}/api/issued`,
               { applicant_id },
@@ -300,7 +314,6 @@ const Issued = () => {
           <p><strong>ອອກໂດຍ:</strong> ${applicant.issued_by || '-'}</p>
           <p><strong>ວັນທີ່ອອກເອກະສານ:</strong> ${formatDate(applicant.issued_date)}</p>
           <p><strong>ວັນທີ່ໝົດອາຍຸ:</strong> ${formatDate(applicant.expiry_date)}</p>
-         
           <p><strong>ສະຖານະ:</strong> ${formatStatus(applicant.status)}</p>
           <p><strong>ວັນທີ່ສ້າງ:</strong> ${formatDate(applicant.created_at)}</p>
           <p><strong>ວັນທີ່ອັບເດດ:</strong> ${formatDate(applicant.updated_at)}</p>
@@ -319,7 +332,7 @@ const Issued = () => {
       <Card className="shadow-2xl rounded-2xl border-2 border-blue-500">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center text-blue-800">
-           ເອກະສານທີ່ຖືກກວດສອບແລ້ວ
+            ເອກະສານທີ່ຖືກກວດສອບແລ້ວ
           </CardTitle>
           <p className="text-center text-blue-600">ເອກະສານທີ່ມີສະຖານະກວດສອບແລ້ວ</p>
           <div className="flex justify-between items-center mt-4">
@@ -358,7 +371,6 @@ const Issued = () => {
                   <TableHead className="font-bold text-black">ບ້ານ</TableHead>
                   <TableHead className="font-bold text-black">ເມືອງ</TableHead>
                   <TableHead className="font-bold text-black">ແຂວງ</TableHead>
-                
                   <TableHead className="font-bold text-black">ເອກະສານ</TableHead>
                   <TableHead className="font-bold text-black">ສະຖານະ</TableHead>
                   <TableHead className="font-bold text-black">ວັນທີ່ອັບເດດ</TableHead>
@@ -367,14 +379,14 @@ const Issued = () => {
               </TableHeader>
               <TableBody>
                 {applicants.map((applicant, index) => (
-                    <TableRow
-                                       key={`${applicant.applicant_id}-${index}`}
-                                       className={
-                                         applicant.updated_at && isToday(parseISO(applicant.updated_at))
-                                           ? 'bg-blue-300 text-blue-900 font-semibold hover:bg-blue-300'
-                                           : 'hover:bg-gray-100'
-                                       }
-                                     >
+                  <TableRow
+                    key={`${applicant.applicant_id}-${index}`}
+                    className={
+                      applicant.updated_at && isToday(parseISO(applicant.updated_at))
+                        ? 'bg-blue-300 text-blue-900 font-semibold hover:bg-blue-300'
+                        : 'hover:bg-gray-100'
+                    }
+                  >
                     <TableCell className="text-black">{applicant.applicant_id}</TableCell>
                     <TableCell className="text-black">{`${applicant.applicant_name || '-'} ${applicant.applicant_surname || '-'}`}</TableCell>
                     <TableCell className="text-black">{formatDate(applicant.dob)}</TableCell>
@@ -382,7 +394,6 @@ const Issued = () => {
                     <TableCell className="text-black">{applicant.village || '-'}</TableCell>
                     <TableCell className="text-black">{applicant.district_name || '-'}</TableCell>
                     <TableCell className="text-black">{applicant.province_name || '-'}</TableCell>
-       
                     <TableCell>
                       {applicant.files?.length > 0 ? (
                         <div className="flex flex-col space-y-2">
@@ -410,6 +421,7 @@ const Issued = () => {
                     <TableCell className="text-black">{formatDate(applicant.updated_at)}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
+                        {/* ປຸ່ມ ເບິ່ງລາຍລະອຽດ — ທຸກ role ກົດໄດ້ */}
                         <Button
                           variant="outline"
                           size="sm"
@@ -419,15 +431,19 @@ const Issued = () => {
                         >
                           ເບິ່ງລາຍລະອຽດ
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusUpdate(applicant.applicant_id, 'issued')}
-                          className="border-blue-500 text-blue-500 hover:bg-blue-100"
-                          aria-label={`ອອກບັດຜູ້ສະໝັກ ${applicant.applicant_id}`}
-                        >
-                          ອອກບັດ
-                        </Button>
+
+                        {/* ປຸ່ມ ອອກບັດ — ສະເພາະ verifier ເທົ່ານັ້ນ */}
+                        {isVerifier && (
+                          <Button 
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusUpdate(applicant.applicant_id, 'issued')}
+                            className="border-blue-500 text-blue-500 hover:bg-blue-100"
+                            aria-label={`ອອກບັດຜູ້ສະໝັກ ${applicant.applicant_id}`}
+                          >
+                            ອອກບັດ
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

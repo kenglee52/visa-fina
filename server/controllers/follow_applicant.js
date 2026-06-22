@@ -44,7 +44,7 @@ exports.getLogs = (req, res) => {
       al.id AS log_id,
       al.applicant_id,
       al.data_entry_employee_id,
-      al.employee_id,
+      al.verifier_id,
       al.action,
       al.status,
       al.timestamp,
@@ -206,7 +206,18 @@ exports.getReport = (req, res) => {
     queryParams.push(date_to);
   }
 
-  query += ` ORDER BY DATE(a.updated_at) = CURDATE() DESC, a.updated_at DESC, a.id DESC LIMIT ? OFFSET ?`;
+  // ກ່ອນ
+  // query += ` ORDER BY DATE(a.updated_at) = CURDATE() DESC, a.updated_at DESC, a.id DESC LIMIT ? OFFSET ?`;
+  // ✅ ຫຼັງ
+  query += ` ORDER BY 
+  CASE a.current_status
+    WHEN 'in_progress' THEN 0
+    WHEN 'rejected' THEN 1
+    ELSE 2
+  END ASC,
+  a.updated_at ASC,
+  a.id ASC
+  LIMIT ? OFFSET ?`;
   queryParams.push(limitNum, offset);
 
   db.query(query, queryParams, (err, results) => {
@@ -334,12 +345,13 @@ exports.getLogReport = (req, res) => {
   const adjustedDateFrom = date_from ? `${date_from} 00:00:00` : null;
   const adjustedDateTo = date_to ? `${date_to} 23:59:59` : null;
 
+  
   const query = `
     SELECT
       al.id AS log_id,
       al.applicant_id,
       al.data_entry_employee_id,
-      al.employee_id,
+      al.verifier_id,
       al.action,
       al.status,
       al.timestamp,

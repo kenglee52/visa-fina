@@ -4,6 +4,7 @@
 # Environment files
 **/.env
 **/.env.local
+*.pdf
 
 # OS
 .DS_Store

@@ -1,5 +1,5 @@
 /**
- * Applicant Edit Form Component (Refactored)
+ * Applicant Edit Form Component (Refactored & Fixed)
  * Edit existing applicant with document management
  * Using senior-level React patterns with hooks and API services
  */
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import DateInput from '@/components/common/DateInput';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import Swal from 'sweetalert2'; // ໃຫ້ແນ່ໃຈວ່າໄດ້ import Swal ມາໃຊ້ງານ
 
 // Hooks
 import { useForm } from '@/hooks/form/useForm';
@@ -194,19 +195,53 @@ const ApplicantEditForm = ({
   };
 
   /**
-   * Validate required file uploads
+   * Validate required file uploads and max file size (5MB)
+   */
+  /**
+   * Validate required file uploads and check size for ALL selected files
    */
   const validateRequiredFiles = () => {
+    // 1. ກໍານົດໄຟລ໌ທີ່ "ບັງຄັບ" ຕ້ອງມີ (ຕ້ອງເລືອກໃໝ່ ຫຼື ມີຂອງເກົ່າຢູ່ແລ້ວ)
     const requiredFiles = [
       FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD,
       FILE_TYPES.REGISTRATION_FORM_GIF_FINA,
     ];
 
+    // 5 MB = 5 * 1024 * 1024 Bytes
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    // --- ຂັ້ນຕອນທີ 1: ກວດສອບສະເພາະໄຟລ໌ບັງຄັບ ວ່າໄດ້ອັບໂຫຼດແລ້ວຫຼືຍັງ ---
     for (const fileType of requiredFiles) {
-      const hasFile = files[fileType] || documents[fileType];
-      if (!hasFile) {
-        showError(`ກະລຸນາອັບໂຫຼດ ${fileType} (ບັງຄັບ)`);
+      const fileData = files[fileType];
+      const hasExistingDoc = !!documents[fileType];
+
+      if (!fileData && !hasExistingDoc) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'ກະລຸນາອັບໂຫຼດຟາຍ!',
+          text: `ທ່ານຍັງບໍ່ໄດ້ອັບໂຫຼດເອກະສານທີ່ຈໍາເປັນ (ບັງຄັບ)`,
+          confirmButtonText: 'ຕົກລົງ',
+          confirmButtonColor: '#3085d6',
+        });
         return false;
+      }
+    }
+
+    // --- ຂັ້ນຕອນທີ 2: ກວດສອບຂະໜາດຂອງ "ທຸກໆໄຟລ໌" ທີ່ມີການເລືອກເຂົ້າມາໃໝ່ ---
+    for (const [fileType, fileData] of Object.entries(files)) {
+      if (fileData && fileData.size > MAX_FILE_SIZE) {
+
+        // ແປງຊື່ Key ໃຫ້ອ່ານງ່າຍເພື່ອສະແດງໃນ Alert
+        constລະຫັດໄຟລ໌ = fileType.replace(/_/g, ' ').toUpperCase();
+
+        Swal.fire({
+          icon: 'error',
+          title: 'ຟາຍມີຂະໜາດໃຫຍ່ເກີນໄປ!',
+          html: `ຟາຍໃນຊ່ອງ <b>"${ລະຫັດໄຟລ໌}"</b> ທີ່ທ່ານເລືອກ ມີຂະໜາດເກີນ 5 MB.<br><span style="color: #d33;">ກະລຸນາເລືອກຟາຍໃໝ່ທີ່ມີຂະໜາດໜ້ອຍກວ່າ 5 MB.</span>`,
+          confirmButtonText: 'ຕົກລົງ',
+          confirmButtonColor: '#d33',
+        });
+        return false; // 🛑 ຕັດຈົບທັນທີ ບໍ່ໃຫ້ໄປເຮັດວຽກໃນຂັ້ນຕອນ Save
       }
     }
 
@@ -268,22 +303,22 @@ const ApplicantEditForm = ({
    * Handle form submission
    */
   const handleSubmit = async () => {
-    // Validate form fields
+    // 1. Validate form fields
     if (!validate()) {
       return;
     }
 
-    // Validate custom business rules
+    // 2. Validate custom business rules
     if (!validateCustomRules()) {
       return;
     }
 
-    // Validate required files
+    // 3. Validate required files and size (ກວດສອບກ່ອນການກົດຢືນຢັນ Save)
     if (!validateRequiredFiles()) {
       return;
     }
 
-    // Show confirmation dialog
+    // 4. Show confirmation dialog
     const confirmed = await confirm({
       title: 'ຢືນຢັນການບັນທຶກ',
       text: 'ທ່ານຕ້ອງການບັນທຶກການແກ້ໄຂນີ້ບໍ?',
@@ -294,10 +329,10 @@ const ApplicantEditForm = ({
     setIsSubmitting(true);
 
     try {
-      // Step 1: Update applicant
+      // Step 1: Create FormData
       const formData = new FormData();
       Object.entries(form).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
+        if (value !== undefined && value !== null) formData.append(key, value);
       });
 
       // Add files to form data
@@ -305,9 +340,10 @@ const ApplicantEditForm = ({
         if (file) formData.append(key, file);
       });
 
+      // Step 2: Send data to API
       await applicantAPI.updateApplicant(applicant_id, formData);
 
-      // Reset files state
+      // Reset new files state
       resetFiles();
 
       // Fetch updated documents
@@ -688,7 +724,6 @@ const ApplicantEditForm = ({
                         accept=".pdf"
                         name={fileType}
                         onChange={handleFileInputChange(fileType)}
-                        required={isRequired}
                         className="mt-1 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
                       />
                       {/* Existing document link */}
@@ -703,6 +738,7 @@ const ApplicantEditForm = ({
                             {documents[fileType].split('/').pop()}
                           </a>
                           <button
+                            type="button"
                             onClick={() => handleFileDelete(fileType)}
                             className="text-red-600 hover:text-red-800 text-sm rounded-full ml-2"
                             title="ລົບໄຟລ໌"

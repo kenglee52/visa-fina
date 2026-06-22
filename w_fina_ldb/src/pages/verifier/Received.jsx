@@ -116,6 +116,7 @@ const Received = () => {
     );
   };
 
+  // ✅ ແກ້ໄຂ: ບໍ່ຖາມ ID + ລະຫັດ receiver ອີກ — ໃຊ້ token ທີ່ login ຢູ່ແລ້ວ
   const handleConfirm = async () => {
     if (selectedApplicants.length === 0) {
       Swal.fire({
@@ -130,77 +131,56 @@ const Received = () => {
       });
       return;
     }
-
-    const { value: formValues } = await Swal.fire({
-      title: 'ຢືນຢັນຕົວຕົນຜູ້ຮັບບັດ',
-      html: `
-        <div class="font-noto-sans-lao">
-          <label for="receiver-id" class="block text-left mb-1">ID ພະນັກງານ:</label>
-          <input id="receiver-id" class="swal2-input font-noto-sans-lao" placeholder="ກະລຸນາກອກ ID ພະນັກງານ">
-          <label for="receiver-password" class="block text-left mb-1 mt-3">ລະຫັດຜ່ານ:</label>
-          <input id="receiver-password" type="password" class="swal2-input font-noto-sans-lao" placeholder="ກະລຸນາກອກລະຫັດຜ່ານ">
-        </div>
-      `,
-      focusConfirm: false,
+ 
+    // ຖາມຢືນຢັນງ່າຍໆ — ບໍ່ຕ້ອງໃສ່ ID ແລະ ລະຫັດ
+    const result = await Swal.fire({
+      icon: 'question',
+      title: 'ຢືນຢັນການຮັບບັດ',
+      text: `ທ່ານຕ້ອງການຢືນຢັນການຮັບບັດສຳລັບ ${selectedApplicants.length} ຄົນ ບໍ່?`,
       showCancelButton: true,
       confirmButtonText: 'ຢືນຢັນ',
       cancelButtonText: 'ຍົກເລີກ',
       confirmButtonColor: '#2563eb',
       cancelButtonColor: '#dc2626',
-      customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg' },
-      preConfirm: () => {
-        const receiverId = document.getElementById('receiver-id').value;
-        const receiverPassword = document.getElementById('receiver-password').value;
-        if (!receiverId || !receiverPassword) {
-          Swal.showValidationMessage('ກະລຸນາກອກ ID ແລະລະຫັດຜ່ານທັງສອງຊ່ອງ');
-          return false;
-        }
-        return { receiverId, receiverPassword };
-      },
+      customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
     });
-
-    if (formValues) {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.post(
-          `${API_BASE_URL}/api/confirm-received`,
-          {
-            applicant_ids: selectedApplicants,
-            receiver_id: formValues.receiverId,
-            receiver_password: formValues.receiverPassword,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        Swal.fire({
-          icon: 'success',
-          title: 'ສຳເລັດ',
-          text: response.data.message || 'ຢືນຢັນການຮັບບັດສຳເລັດ',
-          confirmButtonText: 'ຕົກລົງ',
-          confirmButtonColor: '#2563eb',
-          timer: 3000,
-          timerProgressBar: true,
-          customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
-        });
-
-        setSelectedApplicants([]);
-        fetchApplicants();
-      } catch (err) {
-        console.error('Error confirming receipt:', err);
-        console.log('Status:', err.response?.status);           // 403
-        console.log('Message:', err.response?.data?.message);  // ເຫດຜົນຈາກ server
-        console.log('Data:', err.response?.data);
-        Swal.fire({
-          icon: 'error',
-          title: 'ຂໍ້ຜິດພາດ',
-          text: err.response?.data?.message || 'ບໍ່ສາມາດຢືນຢັນການຮັບບັດໄດ້',
-          confirmButtonText: 'ຕົກລົງ',
-          confirmButtonColor: '#2563eb',
-          timer: 4000,
-          timerProgressBar: true,
-          customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
-        });
-      }
+ 
+    if (!result.isConfirmed) return;
+ 
+    try {
+      const token = localStorage.getItem('token');
+      // ✅ ສົ່ງສະເພາະ applicant_ids — backend ດຶງ receiver ຈາກ token ເອງ
+      const response = await axios.post(
+        `${API_BASE_URL}/api/confirm-received`,
+        { applicant_ids: selectedApplicants },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+ 
+      Swal.fire({
+        icon: 'success',
+        title: 'ສຳເລັດ',
+        text: response.data.message || 'ຢືນຢັນການຮັບບັດສຳເລັດ',
+        confirmButtonText: 'ຕົກລົງ',
+        confirmButtonColor: '#2563eb',
+        timer: 3000,
+        timerProgressBar: true,
+        customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
+      });
+ 
+      setSelectedApplicants([]);
+      fetchApplicants();
+    } catch (err) {
+      console.error('Error confirming receipt:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'ຂໍ້ຜິດພາດ',
+        text: err.response?.data?.message || 'ບໍ່ສາມາດຢືນຢັນການຮັບບັດໄດ້',
+        confirmButtonText: 'ຕົກລົງ',
+        confirmButtonColor: '#2563eb',
+        timer: 4000,
+        timerProgressBar: true,
+        customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
+      });
     }
   };
 

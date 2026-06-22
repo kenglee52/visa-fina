@@ -9,11 +9,211 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isToday } from 'date-fns';
-import { RefreshCcw } from 'lucide-react';
+import { RefreshCcw, X, CheckCircle, XCircle, User, FileText, Calendar, MapPin, CreditCard, Clock } from 'lucide-react';
 import { API_BASE_URL } from '@/config/env.config';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
+// ========== Modal Component ສຳລັບລາຍລະອຽດ ==========
+const ApplicantDetailModal = ({ applicant, isOpen, onClose, isVerifier, onStatusUpdate, formatters }) => {
+  if (!isOpen || !applicant) return null;
 
+  const { formatDate, formatGender, formatDocType, formatFileType, formatRelationshipStatus, formatStatus } = formatters;
+
+  const canCheck = isVerifier && applicant.status !== 'checked' && applicant.status !== 'rejected';
+  const canReject = isVerifier && applicant.status !== 'checked' && applicant.status !== 'rejected';
+
+  const statusColor = {
+    in_progress: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-300', dot: 'bg-orange-400' },
+    rejected: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-300', dot: 'bg-red-500' },
+    checked: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300', dot: 'bg-green-500' },
+  };
+  const sc = statusColor[applicant.status] || { bg: 'bg-gray-100', text: 'text-gray-600', border: 'border-gray-300', dot: 'bg-gray-400' };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center font-noto-sans-lao">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
+
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-700 to-blue-500 rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">ລາຍລະອຽດເອກະສານ</h2>
+              <p className="text-xs text-blue-100">ID: {applicant.applicant_id}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
+            aria-label="ປິດ"
+          >
+            <X className="w-4 h-4 text-white" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+
+          {/* Status Badge */}
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${sc.bg} ${sc.border}`}>
+            <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
+            <span className={`text-sm font-semibold ${sc.text}`}>{formatStatus(applicant.status)}</span>
+          </div>
+
+          {/* ຂໍ້ມູນສ່ວນຕົວ */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <User className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide">ຂໍ້ມູນສ່ວນຕົວ</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'ຊື່-ນາມສະກຸນ', value: `${applicant.applicant_name || '-'} ${applicant.applicant_surname || ''}` },
+                { label: 'ເພດ', value: formatGender(applicant.gender) },
+                { label: 'ວັນເດືອນປີເກີດ', value: formatDate(applicant.dob) },
+                { label: 'ສະຖານະສົມຮົດ', value: formatRelationshipStatus(applicant.relationship_status) },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                  <p className="text-sm font-semibold text-gray-800">{value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ທີ່ຢູ່ */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide">ທີ່ຢູ່</h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'ບ້ານ', value: applicant.village || '-' },
+                { label: 'ເມືອງ', value: applicant.district_name || '-' },
+                { label: 'ແຂວງ', value: applicant.province_name || '-' },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                  <p className="text-sm font-semibold text-gray-800">{value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ເອກະສານ */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <CreditCard className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide">ຂໍ້ມູນເອກະສານ</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'ປະເພດ', value: formatDocType(applicant.doc_type) },
+                { label: 'ເລກທີ່', value: applicant.doc_number || '-' },
+                { label: 'ອອກໂດຍ', value: applicant.issued_by || '-' },
+                { label: 'ວັນທີ່ອອກ', value: formatDate(applicant.issued_date) },
+                { label: 'ໝົດອາຍຸ', value: formatDate(applicant.expiry_date) },
+                { label: 'Fina CTM Key', value: applicant.fina_ctm_key || '-' },
+                { label: 'LBD CTM Key', value: applicant.lbd_ctm_key || '-' },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                  <p className="text-sm font-semibold text-gray-800">{value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ໄຟລ໌ */}
+          {applicant.files?.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-4 h-4 text-blue-600" />
+                <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide">ໄຟລ໌ທີ່ແນບ</h3>
+              </div>
+              <div className="space-y-2">
+                {applicant.files.map((file, i) => (
+                  <a
+                    key={i}
+                    href={`${API_BASE_URL}/${file.file_path}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-colors group"
+                  >
+                    <div className="flex items-center justify-center w-8 h-8 bg-blue-200 rounded-lg group-hover:bg-blue-300 transition-colors">
+                      <FileText className="w-4 h-4 text-blue-700" />
+                    </div>
+                    <span className="text-sm text-blue-700 font-medium">{formatFileType(file.file_type)}</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ວັນທີ່ */}
+          <section>
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wide">ເວລາ</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'ວັນທີ່ສ້າງ', value: formatDate(applicant.created_at) },
+                { label: 'ວັນທີ່ອັບເດດ', value: formatDate(applicant.updated_at) },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                  <p className="text-sm font-semibold text-gray-800">{value}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ປຸ່ມ Action — ສະແດງສະເພາະ verifier */}
+          {isVerifier && (
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => onStatusUpdate(applicant.applicant_id, 'checked')}
+                disabled={!canCheck}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all
+                  ${canCheck
+                    ? 'bg-green-500 hover:bg-green-600 text-white shadow-md hover:shadow-lg active:scale-95'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+              >
+                <CheckCircle className="w-4 h-4" />
+                ກວດສອບ
+              </button>
+              <button
+                onClick={() => onStatusUpdate(applicant.applicant_id, 'rejected')}
+                disabled={!canReject}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all
+                  ${canReject
+                    ? 'bg-red-500 hover:bg-red-600 text-white shadow-md hover:shadow-lg active:scale-95'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  }`}
+              >
+                <XCircle className="w-4 h-4" />
+                ປະຕິເສດ
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ========== Main Component ==========
 const Verifier_confirm = () => {
   const navigate = useNavigate();
   const [applicants, setApplicants] = useState([]);
@@ -23,12 +223,30 @@ const Verifier_confirm = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState('both');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isVerifier, setIsVerifier] = useState(false);
+
+  // Modal state
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const statusOptions = [
     { value: 'both', label: 'ທັງໝົດ (ລໍຖ້າ ແລະ ປະຕິເສດ)' },
     { value: 'in_progress', label: 'ລໍຖ້າການຕິດຕາມ' },
     { value: 'rejected', label: 'ປະຕິເສດ' },
   ];
+
+  // ກວດສອບ role
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setIsVerifier(payload.role === 'verifier');
+      } catch {
+        setIsVerifier(false);
+      }
+    }
+  }, []);
 
   const fetchApplicants = useCallback(async () => {
     setLoading(true);
@@ -40,51 +258,42 @@ const Verifier_confirm = () => {
       let fetchedApplicants = [];
       let total = 0;
       const limit = 10;
-
-      // Fetch based on statusFilter
       const statuses = statusFilter === 'both' ? ['in_progress', 'rejected'] : [statusFilter];
 
       for (const status of statuses) {
         const response = await axios.get(`${API_BASE_URL}/api/follow-report`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Cache-Control': 'no-cache',
-          },
+          headers: { Authorization: `Bearer ${token}`, 'Cache-Control': 'no-cache' },
           params: { page, limit, status },
         });
-
-        console.log(`API Response for ${status}:`, response.data);
         fetchedApplicants = [...fetchedApplicants, ...response.data.data];
         total += response.data.total || 0;
       }
 
-      // Filter applicants by searchTerm if provided
       let filteredApplicants = fetchedApplicants;
       if (searchTerm.trim()) {
-        filteredApplicants = fetchedApplicants.filter(applicant =>
-          applicant.applicant_id?.toString().toLowerCase().includes(searchTerm.trim().toLowerCase())
+        filteredApplicants = fetchedApplicants.filter(a =>
+          a.applicant_id?.toString().toLowerCase().includes(searchTerm.trim().toLowerCase())
         );
         total = filteredApplicants.length;
       }
 
-      // Sort applicants by updated_at, prioritizing today's updates
-      const sortedApplicants = filteredApplicants.sort((a, b) => {
-        const aIsToday = a.updated_at && isToday(parseISO(a.updated_at));
-        const bIsToday = b.updated_at && isToday(parseISO(b.updated_at));
-        if (aIsToday && !bIsToday) return -1;
-        if (!aIsToday && bIsToday) return 1;
-        return new Date(b.updated_at) - new Date(a.updated_at);
+      // ✅ ຖືກ - in_progress ກ່ອນ, rejected ຫຼັງ, ແລ້ວ updated_at ASC ໃນແຕ່ລະກຸ່ມ
+      const sorted = filteredApplicants.sort((a, b) => {
+        const statusOrder = { in_progress: 0, rejected: 1 };
+        const aOrder = statusOrder[a.status] ?? 2;
+        const bOrder = statusOrder[b.status] ?? 2;
+
+        // ຈັດກຸ່ມກ່ອນ
+        if (aOrder !== bOrder) return aOrder - bOrder;
+
+        // ໃນກຸ່ມດຽວກັນ: ເກົ່າສຸດຢູ່ເທີງ (ASC)
+        return new Date(a.updated_at) - new Date(b.updated_at);
       });
 
-      // Paginate the combined results
       const startIndex = (page - 1) * limit;
-      const paginatedApplicants = sortedApplicants.slice(startIndex, startIndex + limit);
-      const calculatedTotalPages = Math.ceil(total / limit) || 1;
-
-      setApplicants(paginatedApplicants);
-      setTotalPages(calculatedTotalPages);
+      setApplicants(sorted.slice(startIndex, startIndex + limit));
+      setTotalPages(Math.ceil(total / limit) || 1);
     } catch (err) {
-      console.error('Error fetching applicants:', err);
       setError(err.response?.data?.message || 'ບໍ່ສາມາດດຶງຂໍ້ມູນຜູ້ສະໝັກໄດ້');
     } finally {
       setLoading(false);
@@ -95,13 +304,9 @@ const Verifier_confirm = () => {
     const token = localStorage.getItem('token');
     if (!token) {
       Swal.fire({
-        icon: 'error',
-        title: 'ຂໍ້ຜິດພາດ',
-        text: 'ກະລຸນາເຂົ້າສູ່ລະບົບກ່ອນ',
-        confirmButtonText: 'ຕົກລົງ',
-        confirmButtonColor: '#2563eb',
-        timer: 4000,
-        timerProgressBar: true,
+        icon: 'error', title: 'ຂໍ້ຜິດພາດ', text: 'ກະລຸນາເຂົ້າສູ່ລະບົບກ່ອນ',
+        confirmButtonText: 'ຕົກລົງ', confirmButtonColor: '#2563eb',
+        timer: 4000, timerProgressBar: true,
         customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
       }).then(() => navigate('/'));
       return;
@@ -112,28 +317,37 @@ const Verifier_confirm = () => {
   useEffect(() => {
     if (error) {
       Swal.fire({
-        icon: 'error',
-        title: 'ຂໍ້ຜິດພາດ',
-        text: error,
-        confirmButtonText: 'ຕົກລົງ',
-        confirmButtonColor: '#2563eb',
-        timer: 4000,
-        timerProgressBar: true,
+        icon: 'error', title: 'ຂໍ້ຜິດພາດ', text: error,
+        confirmButtonText: 'ຕົກລົງ', confirmButtonColor: '#2563eb',
+        timer: 4000, timerProgressBar: true,
         customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
       });
     }
   }, [error]);
 
+  // ເປີດ Modal
+  const openModal = (applicant) => {
+    setSelectedApplicant(applicant);
+    setIsModalOpen(true);
+  };
+
+  // ປິດ Modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedApplicant(null);
+  };
+
+  // ອັບເດດສະຖານະ
   const handleStatusUpdate = async (applicant_id, status) => {
+    if (!isVerifier) return;
+
     const actionText = status === 'checked' ? 'ກວດສອບ' : 'ປະຕິເສດ';
     let feedback = '';
 
-    // Prompt for feedback if rejecting
     if (status === 'rejected') {
       const result = await Swal.fire({
         icon: 'question',
         title: `ຢືນຢັນ${actionText}`,
-        text: `ກະລຸນາລະບຸເຫດຜົນທີ່ປະຕິເສດຜູ້ສະໝັກນີ້`,
         html: `
           <div class="font-noto-sans-lao">
             <label for="reject-feedback" class="block text-left mb-1">ເຫດຜົນທີ່ປະຕິເສດ:</label>
@@ -147,30 +361,22 @@ const Verifier_confirm = () => {
         cancelButtonColor: '#dc2626',
         customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
         preConfirm: () => {
-          const inputFeedback = document.getElementById('reject-feedback').value;
-          if (!inputFeedback || inputFeedback.trim() === '') {
-            Swal.showValidationMessage('ກະລຸນາລະບຸເຫດຜົນທີ່ປະຕິເສດ');
-            return false;
-          }
-          return inputFeedback;
+          const v = document.getElementById('reject-feedback').value;
+          if (!v || v.trim() === '') { Swal.showValidationMessage('ກະລຸນາລະບຸເຫດຜົນທີ່ປະຕິເສດ'); return false; }
+          return v;
         },
       });
-
       if (!result.isConfirmed) return;
       feedback = result.value;
     } else {
       const result = await Swal.fire({
-        icon: 'question',
-        title: `ຢືນຢັນ${actionText}`,
+        icon: 'question', title: `ຢືນຢັນ${actionText}`,
         text: `ທ່ານຕ້ອງການ${actionText}ຜູ້ສະໝັກນີ້ບໍ?`,
         showCancelButton: true,
-        confirmButtonText: 'ຕົກລົງ',
-        cancelButtonText: 'ຍົກເລີກ',
-        confirmButtonColor: '#2563eb',
-        cancelButtonColor: '#dc2626',
+        confirmButtonText: 'ຕົກລົງ', cancelButtonText: 'ຍົກເລີກ',
+        confirmButtonColor: '#2563eb', cancelButtonColor: '#dc2626',
         customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
       });
-
       if (!result.isConfirmed) return;
     }
 
@@ -184,313 +390,142 @@ const Verifier_confirm = () => {
       );
 
       Swal.fire({
-        icon: 'success',
-        title: 'ສຳເລັດ',
-        text: response.data.message,
-        confirmButtonText: 'ຕົກລົງ',
-        confirmButtonColor: '#2563eb',
-        timer: 3000,
-        timerProgressBar: true,
+        icon: 'success', title: 'ສຳເລັດ', text: response.data.message,
+        confirmButtonText: 'ຕົກລົງ', confirmButtonColor: '#2563eb',
+        timer: 3000, timerProgressBar: true,
         customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
       });
 
+      closeModal();
       fetchApplicants();
     } catch (err) {
-      console.error('Error updating status:', err);
       Swal.fire({
-        icon: 'error',
-        title: 'ຂໍ້ຜິດພາດ',
+        icon: 'error', title: 'ຂໍ້ຜິດພາດ',
         text: err.response?.data?.message || 'ບໍ່ສາມາດອັບເດດສະຖານະໄດ້',
-        confirmButtonText: 'ຕົກລົງ',
-        confirmButtonColor: '#2563eb',
-        timer: 4000,
-        timerProgressBar: true,
+        confirmButtonText: 'ຕົກລົງ', confirmButtonColor: '#2563eb',
+        timer: 4000, timerProgressBar: true,
         customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', content: 'text-base' },
       });
     }
   };
 
-  const handleStatusFilterChange = (value) => {
-    setStatusFilter(value);
-    setPage(1);
+  const handleRefresh = () => { setStatusFilter('both'); setPage(1); setSearchTerm(''); fetchApplicants(); };
+
+  // Formatters
+  const formatters = {
+    formatDate: (date) => { if (!date) return '-'; try { return format(parseISO(date), 'yyyy-MM-dd'); } catch { return '-'; } },
+    formatStatus: (s) => ({ in_progress: 'ລໍຖ້າການຕິດຕາມ', rejected: 'ປະຕິເສດ', checked: 'ກວດສອບແລ້ວ' }[s] || '-'),
+    formatGender: (g) => g === 'male' ? 'ຊາຍ' : g === 'female' ? 'ຍິງ' : '-',
+    formatDocType: (d) => ({ passport: 'ໜັງສືຜ່ານແດນ', id_card: 'ບັດປະຈຳຕົວ', family_book: 'ສຳມະໂນຄົວ', other: 'ອື່ນໆ' }[d] || '-'),
+    formatFileType: (f) => ({ customer_request_form: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ', request_earmark_account: 'ໃບສະເໜີຂໍ Block ບັນຊີ', registration_form_credit_card: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ' }[f] || f || '-'),
+    formatRelationshipStatus: (s) => ({ single: 'ໂສດ', married: 'ແຕ່ງງານແລ້ວ', divorced: 'ຢ່າຮ້າງ', widowed: 'ໝ້າຍ/ໝ້າຍຜົວ' }[s] || s || '-'),
   };
 
-  const handleRefresh = () => {
-    setStatusFilter('both');
-    setPage(1);
-    setSearchTerm('');
-    fetchApplicants();
-  };
-
-  const formatDate = (date) => {
-    if (!date) return '-';
-    try {
-      return format(parseISO(date), 'yyyy-MM-dd');
-    } catch {
-      return '-';
-    }
-  };
-
-  const formatStatus = (status) => {
-    switch (status) {
-      case 'in_progress': return 'ລໍຖ້າການຕິດຕາມ';
-      case 'rejected': return 'ປະຕິເສດ';
-      default: return '-';
-    }
-  };
-
-  const formatGender = (gender) => {
-    return gender === 'male' ? 'ຊາຍ' : gender === 'female' ? 'ຍິງ' : '-';
-  };
-
-  const formatDocType = (docType) => {
-    switch (docType) {
-      case 'passport': return 'ໜັງສືຜ່ານແດນ';
-      case 'id_card': return 'ບັດປະຈຳຕົວ';
-      case 'family_book': return 'ສຳມະໂນຄົວ';
-      case 'other': return 'ອື່ນໆ';
-      default: return '-';
-    }
-  };
-
-  const formatFileType = (fileType) => {
-    switch (fileType) {
-      case 'customer_request_form': return 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ';
-      case 'request_earmark_account': return 'ໃບສະເໜີຂໍ Block ບັນຊີ';
-      case 'registration_form_credit_card': return 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ';
-      default: return fileType || '-';
-    }
-  };
-
-  const formatRelationshipStatus = (status) => {
-    switch (status) {
-      case 'single': return 'ໂສດ';
-      case 'married': return 'ແຕ່ງງານແລ້ວ';
-      case 'divorced': return 'ຢ່າຮ້າງ';
-      case 'widowed': return 'ໝ້າຍ/ໝ້າຍຜົວ';
-      default: return status || '-';
-    }
-  };
-
-  const showApplicantDetails = (applicant) => {
-    const filesList = applicant.files?.length > 0
-      ? applicant.files.map(file => `
-          <li>
-            <a href="${url.base_url}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
-              ${formatFileType(file.file_type)}
-            </a>
-          </li>
-        `).join('')
-      : '<li>ບໍ່ມີເອກະສານ</li>';
-
-    Swal.fire({
-      title: 'ລາຍລະອຽດເອກະສານ',
-      html: `
-        <div class="font-noto-sans-lao text-left text-base">
-          <p><strong>ID ເອກະສານ:</strong> ${applicant.applicant_id || '-'}</p>
-          <p><strong>Fina CTM Key:</strong> ${applicant.fina_ctm_key || '-'}</p>
-          <p><strong>LBD CTM Key:</strong> ${applicant.lbd_ctm_key || '-'}</p>
-          <p><strong>ຊື່-ນາມສະກຸນ:</strong> ${applicant.applicant_name || '-'} ${applicant.applicant_surname || '-'}</p>
-          <p><strong>ວັນເດືອນປີເກີດ:</strong> ${formatDate(applicant.dob)}</p>
-          <p><strong>ເພດ:</strong> ${formatGender(applicant.gender)}</p>
-          <p><strong>ບ້ານ:</strong> ${applicant.village || '-'}</p>
-          <p><strong>ເມືອງ:</strong> ${applicant.district_name || '-'}</p>
-          <p><strong>ແຂວງ:</strong> ${applicant.province_name || '-'}</p>
-          <p><strong>ສະຖານະສົມຮົດ:</strong> ${formatRelationshipStatus(applicant.relationship_status)}</p>
-          <p><strong>ປະເພດເອກະສານ:</strong> ${formatDocType(applicant.doc_type)}</p>
-          <p><strong>ເລກທີ່ເອກະສານ:</strong> ${applicant.doc_number || '-'}</p>
-          <p><strong>ອອກໂດຍ:</strong> ${applicant.issued_by || '-'}</p>
-          <p><strong>ວັນທີ່ອອກເອກະສານ:</strong> ${formatDate(applicant.issued_date)}</p>
-          <p><strong>ວັນທີ່ໝົດອາຍຸ:</strong> ${formatDate(applicant.expiry_date)}</p>
-        
-          <p><strong>ສະຖານະ:</strong> ${formatStatus(applicant.status)}</p>
-          <p><strong>ວັນທີ່ສ້າງ:</strong> ${formatDate(applicant.created_at)}</p>
-          <p><strong>ວັນທີ່ອັບເດດ:</strong> ${formatDate(applicant.updated_at)}</p>
-          <p><strong>ເອກະສານ:</strong></p>
-          <ul class="list-disc pl-5">${filesList}</ul>
-        </div>
-      `,
-      confirmButtonText: 'ປິດ',
-      confirmButtonColor: '#2563eb',
-      customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg' },
-    });
+  const statusBadge = (status) => {
+    const map = {
+      in_progress: 'bg-orange-100 text-orange-600',
+      rejected: 'bg-red-100 text-red-600',
+      checked: 'bg-green-100 text-green-600',
+    };
+    return map[status] || 'bg-gray-100 text-gray-600';
   };
 
   return (
     <div className="font-noto-sans-lao p-6 sm:p-8 w-full mx-auto bg-orange-50">
+      {/* Detail Modal */}
+      <ApplicantDetailModal
+        applicant={selectedApplicant}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        isVerifier={isVerifier}
+        onStatusUpdate={handleStatusUpdate}
+        formatters={formatters}
+      />
+
       <Card className="shadow-2xl rounded-2xl border-2 border-blue-500">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center text-blue-800">
-            ກວດສອບເອກະສານ
-          </CardTitle>
-          <p className="text-center text-blue-600">ກວດສອບແລະອັບເດດສະຖານະຂອງເອກກະສານ</p>
+          <CardTitle className="text-3xl font-bold text-center text-blue-800">ກວດສອບເອກະສານ</CardTitle>
+          <p className="text-center text-blue-600">ກວດສອບແລະອັບເດດສະຖານະຂອງເອກະສານ</p>
         </CardHeader>
         <CardContent className="p-8">
           <div className="mb-6 flex flex-col sm:flex-row sm:justify-between gap-4">
             <Input
-              type="text"
-              placeholder="ຄົ້ນຫາ ID ເອກະສານ"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
+              type="text" placeholder="ຄົ້ນຫາ ID ເອກະສານ" value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               className="w-full sm:w-48 h-10 border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao"
             />
-           
-
-            <Button
-              onClick={handleRefresh}
-              className="w-full sm:w-10 h-10 bg-orange-600 hover:bg-orange-700 text-white rounded-md"
-              aria-label="รีโหลดข้อมูล"
-              >
+            <Button onClick={handleRefresh} className="w-full sm:w-10 h-10 bg-orange-600 hover:bg-orange-700 text-white rounded-md">
               <RefreshCcw className="h-5 w-5" />
             </Button>
-             
-            <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-              <SelectTrigger className="w-full sm:w-48 h-10 border-blue-500 text-blue-600 rounded-md font-noto-sans-lao" aria-label="ກັ່ນຕອງຕາມສະຖານະ">
+            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-full sm:w-48 h-10 border-blue-500 text-blue-600 rounded-md font-noto-sans-lao">
                 <SelectValue placeholder="ກັ່ນຕອງຕາມສະຖານະ" />
               </SelectTrigger>
               <SelectContent>
-                {statusOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="text-blue-600">
-                    {option.label}
-                  </SelectItem>
+                {statusOptions.map(o => (
+                  <SelectItem key={o.value} value={o.value} className="text-blue-600">{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
           {loading ? (
-            <div className="text-center text-blue-600">ກຳລັງໂຫຼດ...</div>
+            <div className="text-center text-blue-600 py-10">ກຳລັງໂຫຼດ...</div>
           ) : applicants.length === 0 ? (
-            <div className="text-center text-blue-600">ບໍ່ມີຂໍ້ມູນຜູ້ສະໝັກສຳລັບສະຖານະນີ້</div>
+            <div className="text-center text-blue-600 py-10">ບໍ່ມີຂໍ້ມູນຜູ້ສະໝັກສຳລັບສະຖານະນີ້</div>
           ) : (
             <Table className="whitespace-nowrap text-xs">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="font-bold text-black">ID ເອກະສານ</TableHead>
-                  <TableHead className="font-bold text-black">ຊື່-ນາມສະກຸນ</TableHead>
-                  <TableHead className="font-bold text-black">ວັນເດືອນປີເກີດ</TableHead>
-                  <TableHead className="font-bold text-black">ເພດ</TableHead>
-                  <TableHead className="font-bold text-black">ບ້ານ</TableHead>
-                  <TableHead className="font-bold text-black">ເມືອງ</TableHead>
-                  <TableHead className="font-bold text-black">ແຂວງ</TableHead>
-             
-                  <TableHead className="font-bold text-black">ເອກະສານ</TableHead>
-                  <TableHead className="font-bold text-black">ສະຖານະ</TableHead>
-                  <TableHead className="font-bold text-black">ວັນທີ່ອັບເດດ</TableHead>
-                  <TableHead className="font-bold text-black">ການດຳເນີນການ</TableHead>
+                  {['ID ເອກະສານ', 'ຊື່-ນາມສະກຸນ', 'ວັນເດືອນປີເກີດ', 'ເພດ', 'ບ້ານ', 'ເມືອງ', 'ແຂວງ', 'ສະຖານະ', 'ວັນທີ່ອັບເດດ', 'ລາຍລະອຽດ'].map(h => (
+                    <TableHead key={h} className="font-bold text-black">{h}</TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {applicants.map((applicant, index) => (
                   <TableRow
                     key={`${applicant.applicant_id}-${index}`}
-                    className={
-                      applicant.updated_at && isToday(parseISO(applicant.updated_at))
-                        ? 'bg-blue-300 text-blue-900 font-semibold hover:bg-blue-300'
-                        : 'hover:bg-gray-100'
-                    }
+                    className={applicant.updated_at && isToday(parseISO(applicant.updated_at))
+                      ? 'bg-blue-300 text-blue-900 font-semibold hover:bg-blue-300'
+                      : 'hover:bg-gray-100'}
                   >
                     <TableCell className="text-black">{applicant.applicant_id}</TableCell>
                     <TableCell className="text-black">{`${applicant.applicant_name || '-'} ${applicant.applicant_surname || '-'}`}</TableCell>
-                    <TableCell className="text-black">{formatDate(applicant.dob)}</TableCell>
-                    <TableCell className="text-black">{formatGender(applicant.gender)}</TableCell>
+                    <TableCell className="text-black">{formatters.formatDate(applicant.dob)}</TableCell>
+                    <TableCell className="text-black">{formatters.formatGender(applicant.gender)}</TableCell>
                     <TableCell className="text-black">{applicant.village || '-'}</TableCell>
                     <TableCell className="text-black">{applicant.district_name || '-'}</TableCell>
                     <TableCell className="text-black">{applicant.province_name || '-'}</TableCell>
-                 
                     <TableCell>
-                      {applicant.files?.length > 0 ? (
-                        <div className="flex flex-col space-y-2">
-                          {applicant.files.map((file, fileIndex) => (
-                            <a
-                              key={fileIndex}
-                              href={`${url.base_url}/${file.file_path}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline"
-                            >
-                              {formatFileType(file.file_type)}
-                            </a>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-blue-600">ບໍ່ມີເອກະສານ</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={
-                          `px-2 py-1 rounded-full font-semibold ` +
-                          (applicant.status === 'in_progress'
-                            ? 'bg-orange-100 text-orange-600'
-                            : applicant.status === 'rejected'
-                              ? 'bg-red-100 text-red-600'
-                              : 'bg-blue-100 text-blue-600')
-                        }
-                      >
-                        {formatStatus(applicant.status)}
+                      <span className={`px-2 py-1 rounded-full font-semibold text-xs ${statusBadge(applicant.status)}`}>
+                        {formatters.formatStatus(applicant.status)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-black">{formatDate(applicant.updated_at)}</TableCell>
+                    <TableCell className="text-black">{formatters.formatDate(applicant.updated_at)}</TableCell>
                     <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => showApplicantDetails(applicant)}
-                          className="border-blue-500 text-blue-500 hover:bg-blue-100"
-                          aria-label={`ເບິ່ງລາຍລະອຽດຜູ້ສະໝັກ ${applicant.applicant_id}`}
-                        >
-                          ເບິ່ງລາຍລະອຽດ
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusUpdate(applicant.applicant_id, 'checked')}
-                          className="border-green-500 text-green-500 hover:bg-green-100 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-                          disabled={applicant.status === 'checked'}
-                          aria-label={`ກວດສອບຜູ້ສະໝັກ ${applicant.applicant_id}`}
-                        >
-                          ກວດສອບ
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStatusUpdate(applicant.applicant_id, 'rejected')}
-                          className="border-red-500 text-red-500 hover:bg-red-100 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-                          disabled={applicant.status === 'checked' || applicant.status === 'rejected'}
-                          aria-label={`ປະຕິເສດຜູ້ສະໝັກ ${applicant.applicant_id}`}
-                        >
-                          ປະຕິເສດ
-                        </Button>
-                      </div>
+                      <Button
+                        variant="outline" size="sm"
+                        onClick={() => openModal(applicant)}
+                        className="border-blue-500 text-blue-500 hover:bg-blue-100"
+                      >
+                        ລາຍລະອຽດ
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           )}
+
           <div className="flex justify-between mt-6">
-            <Button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-              disabled={page === 1 || loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
-              aria-label="ໜ້າກ່ອນໜ້າ"
-            >
+            <Button onClick={() => setPage(p => Math.max(p - 1, 1))} disabled={page === 1 || loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed">
               ກ່ອນໜ້າ
             </Button>
-            <span className="self-center text-blue-600">
-              ໜ້າ {page} / {totalPages}
-            </span>
-            <Button
-              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-              disabled={page === totalPages || loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed"
-              aria-label="ໜ້າຕໍ່ໄປ"
-            >
+            <span className="self-center text-blue-600">ໜ້າ {page} / {totalPages}</span>
+            <Button onClick={() => setPage(p => Math.min(p + 1, totalPages))} disabled={page === totalPages || loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed">
               ຕໍ່ໄປ
             </Button>
           </div>

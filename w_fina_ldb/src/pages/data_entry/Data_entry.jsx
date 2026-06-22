@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import DateInput from '@/components/common/DateInput';
-
+import Swal from 'sweetalert2';
 // Hooks
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useForm } from '@/hooks/form/useForm';
@@ -217,16 +217,43 @@ const DataEntry = () => {
   /**
    * Validate required file uploads
    */
-  const validateRequiredFiles = () => {
+const validateRequiredFiles = () => {
     const requiredFiles = [
       FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD,
       FILE_TYPES.REGISTRATION_FORM_GIF_FINA,
     ];
 
-    for (const fileType of requiredFiles) {
-      if (!files[fileType]) {
-        showError(`ກະລຸນາອັບໂຫຼດ ${fileType} (ບັງຄັບ)`);
+    // 1 MB = 1024 * 1024 Bytes (1,048,576 Bytes)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; 
+
+  for (const fileType of requiredFiles) {
+      const fileData = files[fileType];
+
+      // 1. ກວດສອບວ່າໄດ້ເລືອກຟາຍແລ້ວຫຼືຍັງ (ບັງຄັບອັບໂຫຼດ)
+      if (!fileData) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'ກະລຸນາອັບໂຫຼດຟາຍ!',
+          text: `ທ່ານຍັງບໍ່ໄດ້ອັບໂຫຼດ: ${fileType} (ບັງຄັບ)`,
+          confirmButtonText: 'ຕົກລົງ',
+          confirmButtonColor: '#3085d6',
+          customClass: {
+            popup: 'my-custom-popup-class' // ສາມາດໃສ່ class custom ເພີ່ມໄດ້
+          }
+        });
         return false;
+      }
+
+      // 2. ກວດສອບຂະໜາດຟາຍ (ບໍ່ໃຫ້ເກີນ 1 MB)
+      if (fileData && fileData.size > MAX_FILE_SIZE) {
+        Swal.fire({
+          icon: 'error',
+          title: 'ຟາຍມີຂະໜາດໃຫຍ່ເກີນໄປ!',
+          html: `ຟາຍ <b>"${fileType}"</b> ມີຂະໜາດເກີນ 5 MB.<br><span style="color: #d33;">ກະລຸນາເລືອກຟາຍໃໝ່ທີ່ມີຂະໜາດໜ້ອຍກວ່າ 1 MB.</span>`,
+          confirmButtonText: 'ຕົກລົງ',
+          confirmButtonColor: '#d33',
+        });
+        return false; // 🛑 ຕັດຈົບທັນທີ ບໍ່ໃຫ້ໄປເຮັດວຽກໃນຂັ້ນຕອນການ Save/Upload ຕໍ່ໄປ
       }
     }
 

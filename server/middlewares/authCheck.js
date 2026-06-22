@@ -60,6 +60,44 @@ exports.verifierCheck = (req, res, next) => {
   }
 };
 
+exports.receiverCheck = (req, res, next) => {
+  try {
+    const { id } = req.user;
+    const query = 'SELECT * FROM employees WHERE id = ?';
+    db.query(query, [id], (err, results) => {
+      if (err) {
+        logger.error('Error during receiver check:', err);
+        return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+      }
+      if (results.length === 0 || results[0].role !== ROLES.RECEIVER) {
+        return forbidden(res, ERROR_MESSAGES.FORBIDDEN);
+      }
+      next();
+    });
+  } catch (err) {
+    logger.error('Error during receiver check:', err);
+    return serverError(res, ERROR_MESSAGES.FORBIDDEN);
+  }
+};
+
+// exports.verifierOrReceiverCheck = (req, res, next) => {
+//   try {
+//     const { id } = req.user;
+//     const query = 'SELECT * FROM employees WHERE id = ?';
+//     db.query(query, [id], (err, results) => {
+//       if (err) return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+      
+//       const role = results[0]?.role;
+//       // ກວດວ່າເປັນ verifier ຫຼື receiver ອັນໃດອັນໜຶ່ງກໍໄດ້
+//       if (!role || (role !== ROLES.VERIFIER && role !== ROLES.RECEIVER)) {
+//         return forbidden(res, ERROR_MESSAGES.FORBIDDEN);
+//       }
+//       next();
+//     });
+//   } catch (err) {
+//     return serverError(res, ERROR_MESSAGES.FORBIDDEN);
+//   }
+// };
 /**
  * Admin role check middleware
  * Ensures the authenticated user has admin role

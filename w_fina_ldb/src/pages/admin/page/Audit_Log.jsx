@@ -4,6 +4,7 @@ import Swal from 'sweetalert2';
 import { url } from '@/componet/unity/Part';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { API_BASE_URL } from '@/config/env.config';
+
 const actionOptions = [
   { value: '', label: '-- ເລືອກການກະທຳ --' },
   { value: 'check_document', label: 'ກວດເອກະສານ' },
@@ -38,7 +39,6 @@ const Audit_Log = () => {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
-  // Fetch logs
   const fetchLogs = () => {
     setLoading(true);
     setError('');
@@ -49,7 +49,6 @@ const Audit_Log = () => {
       return;
     }
 
-    // Validate date range
     if (filters.date_from && filters.date_to && new Date(filters.date_from) > new Date(filters.date_to)) {
       setError('ວັນທີ່ເລີ່ມຕ້ອງກ່ອນຫຼືເທົ່າກັບວັນທີ່ສິ້ນສຸດ');
       setLoading(false);
@@ -72,13 +71,11 @@ const Audit_Log = () => {
       });
   };
 
-  // Trigger fetch on page or filter change
   useEffect(() => {
     fetchLogs();
     // eslint-disable-next-line
   }, [page]);
 
-  // Handle errors
   useEffect(() => {
     if (error) {
       Swal.fire({
@@ -94,14 +91,12 @@ const Audit_Log = () => {
     }
   }, [error]);
 
-  // Handle filter submit
   const handleFilter = (e) => {
     e.preventDefault();
     setPage(1);
     fetchLogs();
   };
 
-  // Reset filters
   const handleReset = () => {
     setFilters({
       applicant_id: '',
@@ -114,13 +109,10 @@ const Audit_Log = () => {
     fetchLogs();
   };
 
-  // Pagination
   const totalPages = Math.ceil(total / limit);
 
-  // Format field to display '-' for empty or null values
   const formatField = (value) => (value === null || value === '' ? '-' : value);
 
-  // Format timestamp to DD/MM/YYYY HH:mm:ss
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '-';
     const date = new Date(timestamp);
@@ -220,12 +212,13 @@ const Audit_Log = () => {
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Applicant ID</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Name</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Surname</th>
-                <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Data Entry </th>
-                <th className="p-3 text-left text-base sm:text-lg font-blacked-black">verifie </th>
+                <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Data Entry</th>
+                {/* ✅ ປ່ຽນ header ຈາກ "verifie" -> "Verifier" */}
+                <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Verifier</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Action</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Status</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Timestamp</th>
-                <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Receiver </th>
+                <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Receiver</th>
               </tr>
             </thead>
             <tbody>
@@ -236,7 +229,8 @@ const Audit_Log = () => {
                   <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.applicant_name)}</td>
                   <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.applicant_surname)}</td>
                   <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.data_entry_employee_id)}</td>
-                  <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.employee_id)}</td>
+                  {/* ✅ ປ່ຽນຈາກ log.employee_id -> log.verifier_id */}
+                  <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.verifier_id)}</td>
                   <td className="p-3 text-base sm:text-lg font-blacked-black">
                     {formatField(actionOptions.find((a) => a.value === log.action)?.label || log.action)}
                   </td>

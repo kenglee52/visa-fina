@@ -389,7 +389,7 @@ const FollowStatus = () => {
                             {report.files.map((file, index) => (
                               <a
                                 key={index}
-                                href={`${url.base_url}/${file.file_path}`}
+                                href={`${url.base_urlAPI_BASE_UR}/${file.file_path}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline"

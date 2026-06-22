@@ -10,6 +10,7 @@ product_image/
 
 # Logs
 *.log
+*.pdf
 
 # OS
 .DS_Storeconfig/applicant_documents/ 
