@@ -13,25 +13,25 @@ export const FILE_UPLOAD_CONFIG = {
 // Document Types
 export const DOCUMENT_TYPES = [
   { value: 'id_card', label: 'ບັດປະຈຳຕົວ' },
-  { value: 'passport', label: 'ພາສໍອດ' },
-  { value: 'family_book', label: 'ສະມຸດຄອບຄົວ' },
+  { value: 'passport', label: 'ໜັງສືຜ່ານແດນ' },
+  { value: 'family_book', label: 'ສໍາມະໂນຄົວ' },
   { value: 'other', label: 'ອື່ນໆ' },
 ];
 
 // File Types for Applicant Documents
 export const FILE_TYPES = {
-  CUSTOMER_REQUEST_FORM: 'customer_request_form',
-  REQUEST_EARMARK_ACCOUNT: 'request_earmark_account',
-  REGISTRATION_FORM_CREDIT_CARD: 'registration_form_credit_card',
-  REGISTRATION_FORM_GIF_FINA: 'registration_form_gif_fina',
+  CUSTOMER_REQUEST_FORM: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ',
+  REQUEST_EARMARK_ACCOUNT: 'ສັນຍານໍາໃຊ້ບັດສາກົນ',
+  REGISTRATION_FORM_CREDIT_CARD: 'ແບບຟອມລົງທະບຽນຂໍນໍາໃຊ້ບັດສາກົນ',
+  REGISTRATION_FORM_GIF_FINA: 'ແບບຟອມຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ',
 };
 
 // Relationship Statuses
 export const RELATIONSHIP_STATUSES = [
   { value: 'single', label: 'ໂສດ' },
-  { value: 'married', label: 'ສົມພາດ' },
-  { value: 'divorced', label: 'ໝ່ວຍລ້າງ' },
-  { value: 'widowed', label: 'ສະໝັດໝູ່' },
+  { value: 'married', label: 'ແຕ່ງງານ' },
+  { value: 'divorced', label: 'ຢ່າຮ້າງ' },
+  { value: 'widowed', label: 'ໝ້າຍ' },
 ];
 
 // Genders
@@ -117,7 +117,7 @@ export const VALIDATION_MESSAGES = {
   CTM_KEYS_MUST_DIFFER: 'FINA CTM Key ແລະ LBD CTM Key ຕ້ອງແຕກຕ່າງກັນ',
   PROVINCE_REQUIRED: 'ກະລຸນາເລືອກແຂວງ',
   DISTRICT_REQUIRED: 'ກະລຸນາເລືອກເມືອງ',
-  LOGIN_FAILED: 'ເຂົ້າສູ່ລະບົບລົ້ມເຫຼັນ',
+  LOGIN_FAILED: 'ເຂົ້າສູ່ລະບົບລົ້ມແຫຼວ',
 };
 
 // Toast Messages (Lao)
@@ -131,10 +131,10 @@ export const TOAST_MESSAGES = {
   UPLOAD_SUCCESS: 'ອັບໂຫຼດໄຟລ໌ສຳເລັດ',
 
   // Error
-  LOGIN_FAILED: 'ເຂົ້າສູ່ລະບົບລົ້ມເຫຼັນ',
-  SAVE_FAILED: 'ບັນທຶກຂໍ້ມູນລົ້ມເຫຼັນ',
-  DELETE_FAILED: 'ລຶບຂໍ້ມູນລົ້ມເຫຼັນ',
-  UPLOAD_FAILED: 'ອັບໂຫຼດໄຟລ໌ລົ້ມເຫຼັນ',
+  LOGIN_FAILED: 'ເຂົ້າສູ່ລະບົບລົ້ມແຫຼວ',
+  SAVE_FAILED: 'ບັນທຶກຂໍ້ມູນລົ້ມແຫຼວ',
+  DELETE_FAILED: 'ລຶບຂໍ້ມູນລົ້ມແຫຼວ',
+  UPLOAD_FAILED: 'ອັບໂຫຼດໄຟລ໌ລົ້ມແຫຼວ',
   NETWORK_ERROR: 'ບໍ່ສາມາດເຊື່ອມຕໍ່ເຊີບເວີ',
   UNKNOWN_ERROR: 'ເກີດຂໍ້ຜິດພາດທີ່ບໍ່ຄາດຄິດ',
 };
@@ -173,14 +173,14 @@ export const INPUT_LABELS = {
   DOC_NUMBER: 'ເລກທີເອກະສານ',
   ISSUED_BY: 'ອອກໂດຍ',
   ISSUED_DATE: 'ວັນທີອອກ',
-  EXPIRY_DATE: 'ວັນທີໝົປ',
+  EXPIRY_DATE: 'ວັນທີໝົດອາຍຸ',
   PROVINCE: 'ແຂວງ',
   DISTRICT: 'ເມືອງ',
 
   // CTM Keys
-  FINA_CTM_KEY: 'FINA CTM Key',
-  LBD_CTM_KEY: 'LBD CTM Key',
-  CREDIT_RATING: 'ລະດັບເຄຣດິດ',
+  FINA_CTM_KEY: 'FINA Customer ID',
+  LBD_CTM_KEY: 'LBB Customer ID',
+  CREDIT_RATING: 'ປະເພດບັດ',
 
   // Employee
   EMPLOYEE_ID: 'ລະຫັດພະນັກງານ',

@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { format, parseISO, isToday } from 'date-fns';
 import { API_BASE_URL } from '@/config/env.config';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import ApplicantDetailModal from '@/components/applicant/ApplicantDetailModal';
 
 const Issued = () => {
   const navigate = useNavigate();
@@ -21,6 +22,9 @@ const Issued = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [isVerifier, setIsVerifier] = useState(false); // ເພີ່ມ state ກວດສອບ role
+  // ເພີ່ມ state
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // ກວດສອບ role ຈາກ JWT token
   useEffect(() => {
@@ -56,12 +60,9 @@ const Issued = () => {
       const fetchedApplicants = response.data.data || [];
       const total = response.data.total || 0;
 
+      // ✅ ໃໝ່ - ເກົ່າສຸດຢູ່ເທີງ
       const sortedApplicants = fetchedApplicants.sort((a, b) => {
-        const aIsToday = a.updated_at && isToday(parseISO(a.updated_at));
-        const bIsToday = b.updated_at && isToday(parseISO(b.updated_at));
-        if (aIsToday && !bIsToday) return -1;
-        if (!aIsToday && bIsToday) return 1;
-        return new Date(b.updated_at) - new Date(a.updated_at);
+        return new Date(a.updated_at) - new Date(b.updated_at);
       });
 
       const startIndex = (page - 1) * limit;
@@ -284,51 +285,31 @@ const Issued = () => {
     }
   };
 
-  const showApplicantDetails = (applicant) => {
-    const filesList = applicant.files?.length > 0
-      ? applicant.files.map(file => `
-          <li>
-            <a href="${API_BASE_URL}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
-              ${formatFileType(file.file_type)}
-            </a>
-          </li>
-        `).join('')
-      : '<li>ບໍ່ມີເອກະສານ</li>';
 
-    Swal.fire({
-      title: 'ລາຍລະອຽດເອກະສານທີ່ຜ່ານການກວດສອບແລ້ວ',
-      html: `
-        <div class="font-noto-sans-lao text-left text-base">
-          <p><strong>ID ເອກະສານ:</strong> ${applicant.applicant_id || '-'}</p>
-          <p><strong>Fina CTM Key:</strong> ${applicant.fina_ctm_key || '-'}</p>
-          <p><strong>LBD CTM Key:</strong> ${applicant.lbd_ctm_key || '-'}</p>
-          <p><strong>ຊື່-ນາມສະກຸນ:</strong> ${applicant.applicant_name || '-'} ${applicant.applicant_surname || '-'}</p>
-          <p><strong>ວັນເດືອນປີເກີດ:</strong> ${formatDate(applicant.dob)}</p>
-          <p><strong>ເພດ:</strong> ${formatGender(applicant.gender)}</p>
-          <p><strong>ບ້ານ:</strong> ${applicant.village || '-'}</p>
-          <p><strong>ເມືອງ:</strong> ${applicant.district_name || '-'}</p>
-          <p><strong>ແຂວງ:</strong> ${applicant.province_name || '-'}</p>
-          <p><strong>ສະຖານະສົມຮົດ:</strong> ${formatRelationshipStatus(applicant.relationship_status)}</p>
-          <p><strong>ປະເພດເອກະສານ:</strong> ${formatDocType(applicant.doc_type)}</p>
-          <p><strong>ເລກທີ່ເອກະສານ:</strong> ${applicant.doc_number || '-'}</p>
-          <p><strong>ອອກໂດຍ:</strong> ${applicant.issued_by || '-'}</p>
-          <p><strong>ວັນທີ່ອອກເອກະສານ:</strong> ${formatDate(applicant.issued_date)}</p>
-          <p><strong>ວັນທີ່ໝົດອາຍຸ:</strong> ${formatDate(applicant.expiry_date)}</p>
-          <p><strong>ສະຖານະ:</strong> ${formatStatus(applicant.status)}</p>
-          <p><strong>ວັນທີ່ສ້າງ:</strong> ${formatDate(applicant.created_at)}</p>
-          <p><strong>ວັນທີ່ອັບເດດ:</strong> ${formatDate(applicant.updated_at)}</p>
-          <p><strong>ເອກະສານ:</strong></p>
-          <ul class="list-disc pl-5">${filesList}</ul>
-        </div>
-      `,
-      confirmButtonText: 'ປິດ',
-      confirmButtonColor: '#2563eb',
-      customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg' },
-    });
-  };
 
   return (
     <div className="font-noto-sans-lao p-6 sm:p-8 w-full mx-auto bg-orange-50">
+      {/* ✅ ເພີ່ມ Modal ຢູ່ໃນ return */}
+      <ApplicantDetailModal
+        applicant={selectedApplicant}
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setSelectedApplicant(null); }}
+        // extraActions={
+        //   isVerifier ? (
+        //     <button
+        //       onClick={() => {
+        //         setIsModalOpen(false);
+        //         handleStatusUpdate(selectedApplicant.applicant_id, 'issued');
+        //       }}
+        //       className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
+        //     >
+        //       ອອກບັດ
+        //     </button>
+        //   ) : null
+        // }
+
+      />
+
       <Card className="shadow-2xl rounded-2xl border-2 border-blue-500">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center text-blue-800">
@@ -425,7 +406,8 @@ const Issued = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => showApplicantDetails(applicant)}
+                          // ✅ ໃໝ່
+                          onClick={() => { setSelectedApplicant(applicant); setIsModalOpen(true); }}
                           className="border-blue-500 text-blue-500 hover:bg-blue-100"
                           aria-label={`ເບິ່ງລາຍລະອຽດຜູ້ສະໝັກ ${applicant.applicant_id}`}
                         >
@@ -434,7 +416,7 @@ const Issued = () => {
 
                         {/* ປຸ່ມ ອອກບັດ — ສະເພາະ verifier ເທົ່ານັ້ນ */}
                         {isVerifier && (
-                          <Button 
+                          <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleStatusUpdate(applicant.applicant_id, 'issued')}

@@ -102,6 +102,28 @@ exports.receiverCheck = (req, res, next) => {
  * Admin role check middleware
  * Ensures the authenticated user has admin role
  */
+// ✅ ເພີ່ມ middleware ໃໝ່ - verifier ຫຼື receiver ເຂົ້າໄດ້
+exports.verifierOrReceiverCheck = (req, res, next) => {
+  try {
+    const { id } = req.user;
+    const query = 'SELECT * FROM employees WHERE id = ?';
+    db.query(query, [id], (err, results) => {
+      if (err) {
+        logger.error('Error during verifier/receiver check:', err);
+        return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+      }
+      const role = results[0]?.role;
+      if (!role || (role !== ROLES.VERIFIER && role !== ROLES.RECEIVER)) {
+        return forbidden(res, ERROR_MESSAGES.FORBIDDEN);
+      }
+      next();
+    });
+  } catch (err) {
+    logger.error('Error during verifier/receiver check:', err);
+    return serverError(res, ERROR_MESSAGES.FORBIDDEN);
+  }
+};
+
 exports.adminCheck = (req, res, next) => {
   try {
     const { id } = req.user;

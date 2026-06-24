@@ -281,21 +281,34 @@ const ApplicantEditForm = ({
     }
   };
 
+
+
   /**
-   * Handle file delete
-   */
+ * Handle file delete
+ * ແກ້ໄຂ: ເອົາ fetchReports?.() ອອກເພື່ອບໍ່ໃຫ້ໜ້າຈໍເດັ້ງ
+ */
   const handleFileDelete = async (fileType) => {
-    const confirmed = await confirmDeleteDialog(fileType);
+    // 1. ເອີ້ນໃຊ້ confirmDeleteDialog ໂດຍສົ່ງຊື່ໄຟລ໌ທີ່ອ່ານງ່າຍໄປໃຫ້
+    const friendlyName = fileType.replace(/_/g, ' ').toUpperCase();
+    const confirmed = await confirmDeleteDialog(friendlyName);
     if (!confirmed) return;
 
     try {
+      // 2. ຍິງ API ລຶບໄຟລ໌
       await documentAPI.deleteDocument(applicant_id, fileType);
+
+      // 3. ເຄຍສະຖານະ Front-end
       setDocuments((prev) => ({ ...prev, [fileType]: null }));
       setFiles((prev) => ({ ...prev, [fileType]: null }));
-      showSuccess(TOAST_MESSAGES.DELETE_SUCCESS);
-      fetchReports?.();
+
+      // 4. ສະແດງປັອບອັບສຳເລັດ ໂດຍໃຊ້ຊື່ໃຫ້ຖືກຕ້ອງ
+      showSuccess('ສຳເລັດ', `ໄຟລ໌ ${friendlyName} ຖືກລຶບສຳເລັດແລ້ວ`);
+
+      // 🛑 ເອົາ fetchReports?.(); ອອກຈາກບ່ອນນີ້ເດັດຂາດ! 
+      // ຫ້າມໃສ່ fetchReports?.() ຢູ່ບ່ອນນີ້ ເພາະມັນຄືໂຕທີ່ພາເດັ້ງອອກໜ້າຫຼັກ.
+
     } catch (error) {
-      showError(error.response?.data?.message || TOAST_MESSAGES.DELETE_FAILED);
+      showError('ເກີດຂໍ້ຜິດພາດ', error.response?.data?.message || 'ບໍ່ສາມາດລຶບໄຟລ໌ໄດ້');
     }
   };
 
@@ -351,7 +364,7 @@ const ApplicantEditForm = ({
       setDocuments(response.data?.data?.documents || {});
 
       showSuccess(TOAST_MESSAGES.UPDATE_SUCCESS);
-      fetchReports?.();
+      // fetchReports?.();
     } catch (error) {
       console.error('Error updating applicant:', error);
       showError(error.response?.data?.message || TOAST_MESSAGES.SAVE_FAILED);
@@ -361,9 +374,16 @@ const ApplicantEditForm = ({
   };
 
   /**
-   * Handle dialog close
-   */
+ * Handle dialog close
+ * ແກ້ໄຂ: ດັກຈັບບໍ່ໃຫ້ SweetAlert2 ມາແຍ່ງ Focus ແລ້ວພາເດັ້ງອັດຕະໂນມັດ
+ */
   const handleDialogClose = (isOpen) => {
+    // ຖ້າມີປັອບອັບ SweetAlert2 (ບໍ່ວ່າຈະເປັນຕອນຖາມລຶບ ຫຼື ຕອນແຈ້ງເຕືອນສຳເລັດ) ເປີດຢູ່ເທິງໜ້າຈໍ
+    // ໃຫ້ລັອກ Dialog ໄວ້ ຫ້າມເຮັດວຽກໂລຈິກປິດເດັດຂາດ
+    if (Swal.isVisible()) {
+      return;
+    }
+
     if (!isOpen && !isSubmitting) {
       // Check if there are unsaved changes
       const hasChanges = Object.keys(files).some((key) => files[key] !== null);
@@ -376,12 +396,14 @@ const ApplicantEditForm = ({
             reset();
             resetFiles();
             onOpenChange(false);
+            fetchReports?.(); // ເອີ້ນຕອນປິດຈິງໆ
           }
         });
       } else {
         onOpenChange(false);
+        fetchReports?.(); // ເອີ້ນຕອນປິດຈິງໆ
       }
-    } else {
+    } else if (isOpen) {
       onOpenChange(true);
     }
   };
@@ -396,7 +418,11 @@ const ApplicantEditForm = ({
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-4xl font-noto-sans-lao animate-in fade-in duration-300 max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          // ບລັອກບໍ່ໃຫ້ປິດ Dialog ເມື່ອກົດຂ້າງນອກ (ປ້ອງກັນ Swal ດຶງ Focus)
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          className="max-w-4xl font-noto-sans-lao animate-in fade-in duration-300 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-blue-800">ແກ້ໄຂຂໍ້ມູນຜູ້ສະໝັກ</DialogTitle>
           </DialogHeader>
@@ -765,6 +791,7 @@ const ApplicantEditForm = ({
 
           <DialogFooter className="mt-4 sm:flex sm:flex-row sm:justify-end gap-4">
             <Button
+              type="button" // 👈 ໃສ່ໂຕນີ້ເພີ່ມເຂົ້າໄປ (ສຳຄັນຫຼາຍ)
               variant="outline"
               onClick={() => handleDialogClose(false)}
               disabled={isSubmitting}

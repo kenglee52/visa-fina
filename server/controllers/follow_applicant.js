@@ -207,6 +207,161 @@ exports.getReport = (req, res) => {
   }
 
   // ກ່ອນ
+  query += ` ORDER BY a.updated_at DESC, a.id DESC LIMIT ? OFFSET ?`;
+  
+  queryParams.push(limitNum, offset);
+
+  db.query(query, queryParams, (err, results) => {
+    if (err) {
+      logger.error('Query error:', err);
+      return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+    }
+
+    if (results.length === 0) {
+      return paginated(res, SUCCESS_MESSAGES.REPORT_FETCHED, [], 0, pageNum, limitNum);
+    }
+
+    const applicantIds = [...new Set(results.map(r => r.applicant_id))];
+    const docQuery = `
+      SELECT DISTINCT applicant_id, file_type, file_path
+      FROM applicant_documents
+      WHERE applicant_id IN (?)
+    `;
+    db.query(docQuery, [applicantIds], (docErr, docResults) => {
+      if (docErr) {
+        logger.error('Document query error:', docErr);
+        return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+      }
+
+      const dataMap = new Map();
+      results.forEach(applicant => {
+        const key = applicant.applicant_id;
+        if (!dataMap.has(key)) {
+          dataMap.set(key, {
+            ...applicant,
+            files: docResults.filter(f => f.applicant_id === key),
+            check_date: null,
+            issue_date: null,
+            receive_date: null,
+            data_entry_name: null,
+            data_entry_last_name: null,
+            verifier_name: null,
+            verifier_last_name: null
+          });
+        }
+      });
+
+      const data = Array.from(dataMap.values());
+
+      let countQuery = `SELECT COUNT(DISTINCT a.id) as total FROM applicants a
+                       LEFT JOIN districts d ON a.district_id = d.id
+                       LEFT JOIN provinces p ON a.province_id = p.id
+                       WHERE 1=1`;
+      const countParams = [];
+      if (status) {
+        countQuery += ` AND a.current_status = ?`;
+        countParams.push(status);
+      }
+      if (applicant_id) {
+        countQuery += ` AND a.id = ?`;
+        countParams.push(applicant_id);
+      }
+      if (date_from) {
+        countQuery += ` AND DATE(a.created_at) >= ?`;
+        countParams.push(date_from);
+      }
+      if (date_to) {
+        countQuery += ` AND DATE(a.created_at) <= ?`;
+        countParams.push(date_to);
+      }
+
+      db.query(countQuery, countParams, (countErr, countResults) => {
+        if (countErr) {
+          logger.error('Count query error:', countErr);
+          return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+        }
+
+        return paginated(res, SUCCESS_MESSAGES.REPORT_FETCHED, data, countResults[0].total || 0, pageNum, limitNum);
+      });
+    });
+  });
+};
+exports.getVerifierReport = (req, res) => {
+  const { status, page = 1, limit = 10, applicant_id, date_from, date_to } = req.query;
+
+  // Validate pagination
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  if (isNaN(pageNum) || pageNum < 1 || isNaN(limitNum) || limitNum < 1) {
+    return badRequest(res, 'Invalid page or limit value');
+  }
+
+  // Validate status
+  const validStatuses = Object.values(APPLICANT_STATUS);
+  if (status && !validStatuses.includes(status)) {
+    return badRequest(res, 'Invalid status value');
+  }
+
+  // Validate date format (yyyy-mm-dd)
+  if (date_from && !/^\d{4}-\d{2}-\d{2}$/.test(date_from)) {
+    return badRequest(res, 'Invalid date_from format, use yyyy-mm-dd');
+  }
+  if (date_to && !/^\d{4}-\d{2}-\d{2}$/.test(date_to)) {
+    return badRequest(res, 'Invalid date_to format, use yyyy-mm-dd');
+  }
+
+  const offset = (pageNum - 1) * limitNum;
+
+  // Build query with JOINs
+  let query = `
+    SELECT DISTINCT
+      a.id AS applicant_id,
+      a.fina_ctm_key,
+      a.lbd_ctm_key,
+      a.name AS applicant_name,
+      a.surname AS applicant_surname,
+      a.dob,
+      a.village,
+      a.gender,
+      a.district_id,
+      d.name AS district_name,
+      a.province_id,
+      p.name AS province_name,
+      a.relationship_status,
+      a.doc_type,
+      a.doc_number,
+      a.issued_by,
+      a.issued_date,
+      a.expiry_date,
+      a.current_status AS status,
+      a.created_at,
+      a.updated_at,
+      a.last_rejected_feedback
+    FROM applicants a
+    LEFT JOIN districts d ON a.district_id = d.id
+    LEFT JOIN provinces p ON a.province_id = p.id
+    WHERE 1=1
+  `;
+  const queryParams = [];
+
+  if (status) {
+    query += ` AND a.current_status = ?`;
+    queryParams.push(status);
+  }
+  if (applicant_id) {
+    query += ` AND a.id = ?`;
+    queryParams.push(applicant_id);
+  }
+  if (date_from) {
+    query += ` AND DATE(a.created_at) >= ?`;
+    queryParams.push(date_from);
+  }
+  if (date_to) {
+    query += ` AND DATE(a.created_at) <= ?`;
+    queryParams.push(date_to);
+  }
+
+  // ກ່ອນ
   // query += ` ORDER BY DATE(a.updated_at) = CURDATE() DESC, a.updated_at DESC, a.id DESC LIMIT ? OFFSET ?`;
   // ✅ ຫຼັງ
   query += ` ORDER BY 

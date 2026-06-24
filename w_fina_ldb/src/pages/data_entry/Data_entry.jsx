@@ -159,7 +159,7 @@ const DataEntry = () => {
       }
     };
     fetchDistricts();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.province_id]);
 
   // Fetch documents after applicant creation
@@ -217,16 +217,16 @@ const DataEntry = () => {
   /**
    * Validate required file uploads
    */
-const validateRequiredFiles = () => {
+  const validateRequiredFiles = () => {
     const requiredFiles = [
       FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD,
       FILE_TYPES.REGISTRATION_FORM_GIF_FINA,
     ];
 
     // 1 MB = 1024 * 1024 Bytes (1,048,576 Bytes)
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-  for (const fileType of requiredFiles) {
+    for (const fileType of requiredFiles) {
       const fileData = files[fileType];
 
       // 1. ກວດສອບວ່າໄດ້ເລືອກຟາຍແລ້ວຫຼືຍັງ (ບັງຄັບອັບໂຫຼດ)
@@ -273,6 +273,20 @@ const validateRequiredFiles = () => {
 
     // Validate custom business rules
     if (!validateCustomRules()) {
+      return;
+    }
+
+    // ✅ ເພີ່ມ: ກວດ fileErrors ຈາກ useFileUpload hook
+    const hasFileErrors = Object.values(fileErrors).some(err => err);
+    if (hasFileErrors) {
+      const firstError = Object.values(fileErrors).find(err => err);
+      Swal.fire({
+        icon: 'error',
+        title: 'ຂໍ້ຜິດພາດໄຟລ໌!',
+        text: firstError,
+        confirmButtonText: 'ຕົກລົງ',
+        confirmButtonColor: '#d33',
+      });
       return;
     }
 
@@ -332,9 +346,31 @@ const validateRequiredFiles = () => {
   /**
    * Handle file input change
    */
+  // const handleFileInputChange = (fileType) => (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     handleFileChange(fileType, file);
+  //   }
+  // };
+
+  // ✅ Fix 1: handleFileInputChange — ກວດ size ທັນທີ ກ່ອນຈະ set file
   const handleFileInputChange = (fileType) => (e) => {
     const file = e.target.files[0];
     if (file) {
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+      if (file.size > MAX_FILE_SIZE) {
+        // Clear input ທັນທີ
+        e.target.value = '';
+        Swal.fire({
+          icon: 'error',
+          title: 'ຟາຍມີຂະໜາດໃຫຍ່ເກີນໄປ!',
+          html: `ຟາຍ <b>"${file.name}"</b> ມີຂະໜາດເກີນ 5 MB.<br>
+               <span style="color:#d33;">ກະລຸນາເລືອກຟາຍໃໝ່ທີ່ມີຂະໜາດໜ້ອຍກວ່າ 5 MB.</span>`,
+          confirmButtonText: 'ຕົກລົງ',
+          confirmButtonColor: '#d33',
+        });
+        return; // ❌ ບໍ່ set file
+      }
       handleFileChange(fileType, file);
     }
   };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { url } from '@/componet/unity/Part';
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +14,7 @@ import { RefreshCcw, X } from 'lucide-react';
 import 'react-datepicker/dist/react-datepicker.css';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { API_BASE_URL } from '@/config/env.config';
+import ApplicantDetailModal from '@/components/applicant/ApplicantDetailModal';
 
 const FollowStatus = () => {
   const navigate = useNavigate();
@@ -26,6 +27,9 @@ const FollowStatus = () => {
   const [applicantIdSearch, setApplicantIdSearch] = useState('');
   const [dateFrom, setDateFrom] = useState(null);
   const [dateTo, setDateTo] = useState(null);
+  // ເພີ່ມ state
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const statusOptions = [
     { value: 'all', label: 'ທັງໝົດ' },
@@ -87,12 +91,9 @@ const FollowStatus = () => {
         }
       }
 
+      // ✅ ກັບຄືນ sort ແບບເກົ່າ - ໃໝ່ສຸດຢູ່ເທີງ
       const sortedReports = filteredReports.sort((a, b) => {
-        const aIsToday = a.updated_at && isToday(parseISO(a.updated_at));
-        const bIsToday = b.updated_at && isToday(parseISO(b.updated_at));
-        if (aIsToday && !bIsToday) return -1;
-        if (!aIsToday && bIsToday) return 1;
-        return 0;
+        return new Date(b.updated_at) - new Date(a.updated_at);
       });
 
       setReports(sortedReports);
@@ -171,7 +172,7 @@ const FollowStatus = () => {
       case 'registration_form_credit_card': return 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ VISA';
       case 'registration_form_gif_fina': return 'ແບບຟອມລົງທະບຽນ GIF Fina';
 
-      
+
       default: return fileType || '-';
     }
   };
@@ -201,46 +202,7 @@ const FollowStatus = () => {
     return gender === 'male' ? 'ຊາຍ' : gender === 'female' ? 'ຍິງ' : '-';
   };
 
-  const showApplicantDetails = (report) => {
-    const filesList = report.files?.length > 0
-      ? report.files.map(file => `
-          <li>
-            <a href="${API_BASE_URL}/${file.file_path}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
-              ${formatFileType(file.file_type)}
-            </a>
-          </li>
-        `).join('')
-      : '<li>ບໍ່ມີເອກະສານ</li>';
-
-    Swal.fire({
-      title: 'ລາຍລະອຽດຜູ້ສະໝັກ',
-      html: `
-        <div class="font-noto-sans-lao text-left text-base">
-          <p><strong>ID ຜູ້ສະໝັກ:</strong> ${report.applicant_id || '-'}</p>
-          <p><strong>ຊື່-ນາມສະກຸນ:</strong> ${report.applicant_name || '-'} ${report.applicant_surname || '-'}</p>
-          <p><strong>ວັນເດືອນປີເກີດ:</strong> ${formatDate(report.dob)}</p>
-          <p><strong>ເພດ:</strong> ${formatGender(report.gender)}</p>
-          <p><strong>ບ້ານ:</strong> ${report.village || '-'}</p>
-          <p><strong>ເມືອງ:</strong> ${report.district_name || '-'}</p>
-          <p><strong>ແຂວງ:</strong> ${report.province_name || '-'}</p>
-          <p><strong>ສະຖານະສົມຮົດ:</strong> ${report.relationship_status || '-'}</p>
-          <p><strong>ປະເພດເອກະສານ:</strong> ${formatDocType(report.doc_type)}</p>
-          <p><strong>ເລກທີ່ເອກະສານ:</strong> ${report.doc_number || '-'}</p>
-       
-          <p><strong>ວັນທີ່ອອກເອກະສານ:</strong> ${formatDate(report.issued_date)}</p>
-          <p><strong>ວັນທີ່ໝົດອາຍຸ:</strong> ${formatDate(report.expiry_date)}</p>
-          <p><strong>ສະຖານະ:</strong> ${formatStatus(report.status)}</p>
-          <p><strong>ວັນທີ່ສ້າງ:</strong> ${formatDate(report.created_at)}</p>
-          <p><strong>ວັນທີ່ອັບເດດ:</strong> ${formatDate(report.updated_at)}</p>
-          <p><strong>ເອກະສານ:</strong></p>
-          <ul class="list-disc pl-5">${filesList}</ul>
-        </div>
-      `,
-      confirmButtonText: 'ປິດ',
-      confirmButtonColor: '#2563eb',
-      customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg' },
-    });
-  };
+ 
 
   const showRejectionFeedback = (report) => {
     Swal.fire({
@@ -259,7 +221,26 @@ const FollowStatus = () => {
 
   return (
     <div className="font-noto-sans-lao p-6 sm:p-8 w-full mx-auto bg-slate-50">
-        <Card className="shadow-2xl rounded-2xl border-2 border-blue-500">
+      <ApplicantDetailModal
+        applicant={selectedApplicant}
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setSelectedApplicant(null); }}
+        // extraActions={
+        //   isVerifier ? (
+        //     <button
+        //       onClick={() => {
+        //         setIsModalOpen(false);
+        //         handleStatusUpdate(selectedApplicant.applicant_id, 'issued');
+        //       }}
+        //       className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
+        //     >
+        //       ອອກບັດ
+        //     </button>
+        //   ) : null
+        // }
+
+      />
+      <Card className="shadow-2xl rounded-2xl border-2 border-blue-500">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center text-blue-800">
             ລາຍງານການຕິດຕາມເອກະສານ
@@ -372,13 +353,13 @@ const FollowStatus = () => {
                         isRejected
                           ? 'bg-red-100 hover:bg-red-200'
                           : report.updated_at && isToday(parseISO(report.updated_at))
-                          ? 'bg-yellow-100 hover:bg-yellow-200'
-                          : 'hover:bg-gray-50'
+                            ? 'bg-yellow-100 hover:bg-yellow-200'
+                            : 'hover:bg-gray-50'
                       }
                     >
                       <TableCell>{report.applicant_id}</TableCell>
                       <TableCell>{`${report.applicant_name} ${report.applicant_surname}`}</TableCell>
-                         <TableCell className="text-black">{formatDate(report.dob)}</TableCell>
+                      <TableCell className="text-black">{formatDate(report.dob)}</TableCell>
                       <TableCell>{report.village || '-'}</TableCell>
 
                       <TableCell>{report.district_name || '-'}</TableCell>
@@ -389,7 +370,7 @@ const FollowStatus = () => {
                             {report.files.map((file, index) => (
                               <a
                                 key={index}
-                                href={`${url.base_urlAPI_BASE_UR}/${file.file_path}`}
+                                href={`${API_BASE_URL}/${file.file_path}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline"
@@ -408,7 +389,8 @@ const FollowStatus = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => showApplicantDetails(report)}
+                          // ✅ ໃໝ່
+                          onClick={() => { setSelectedApplicant(report); setIsModalOpen(true); }}
                           className="border-blue-500 text-blue-500 hover:bg-blue-100"
                           aria-label={`ເບິ່ງລາຍລະອຽດຜູ້ສະໝັກ ${report.applicant_id}`}
                         >
@@ -420,9 +402,8 @@ const FollowStatus = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/data-entry/edit/${report.applicant_id}`)}
-                          className={`border-blue-500 text-blue-500 hover:bg-blue-100 ${
-                            !isEditable ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : ''
-                          }`}
+                          className={`border-blue-500 text-blue-500 hover:bg-blue-100 ${!isEditable ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : ''
+                            }`}
                           aria-label={`ແກ້ໄຂຜູ້ສະໝັກ ${report.applicant_id}`}
                           disabled={!isEditable}
                         >
@@ -434,9 +415,8 @@ const FollowStatus = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => showRejectionFeedback(report)}
-                          className={`border-red-500 text-red-500 hover:bg-red-100 ${
-                            !isRejected ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : ''
-                          }`}
+                          className={`border-red-500 text-red-500 hover:bg-red-100 ${!isRejected ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : ''
+                            }`}
                           aria-label={`ເບິ່ງເຫດຜົນປະຕິເສດຜູ້ສະໝັກ ${report.applicant_id}`}
                           disabled={!isRejected}
                         >

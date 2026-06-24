@@ -261,7 +261,7 @@ const Verifier_confirm = () => {
       const statuses = statusFilter === 'both' ? ['in_progress', 'rejected'] : [statusFilter];
 
       for (const status of statuses) {
-        const response = await axios.get(`${API_BASE_URL}/api/follow-report`, {
+        const response = await axios.get(`${API_BASE_URL}/api/verifier-report`, {
           headers: { Authorization: `Bearer ${token}`, 'Cache-Control': 'no-cache' },
           params: { page, limit, status },
         });

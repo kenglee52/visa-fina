@@ -15,7 +15,7 @@ import {
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
 import axios from 'axios';
-import { url } from '@/componet/unity/Part';
+// import { url } from '@/componet/unity/Part';
 import { ArrowLeft } from 'lucide-react';
 
 // Custom DateInput component for dd/mm/yyyy display with native date picker
@@ -233,45 +233,70 @@ const EditApplicant = () => {
 
   const handleDateChange = (e) => {
     const { name, value } = e.target;
-    if (value && !/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
-      setError(`ຮູບແບບວັນທີ່ບໍ່ຖືກຕ້อງ ສຳລັບ ${name === 'dob' ? 'ວັນເດືອນປີເກີດ' : name === 'issued_date' ? 'ວັນທີ່ອອກ' : 'ວັນທີ່ໝົດອາຍຸ'}: ໃຊ້ dd/mm/yyyy`);
+
+    // ຖ້າຄ່າຖືກສົ່ງມາເປັນ YYYY-MM-DD ຈາກ Date Picker ຢູ່ແລ້ວ ໃຫ້ອັບເດດເລີຍ
+    if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setError('');
+      return;
+    }
+
+    // ຖ້າເປັນຄ່າວ່າງ
+    if (!value) {
       setFormData((prev) => ({ ...prev, [name]: '' }));
       return;
     }
-    if (value) {
+
+    // ຖ້າເປັນການພິມ ແລະ ພິມຄົບ 10 ຫຼັກ (dd/mm/yyyy)
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
       const [day, month, year] = value.split('/');
       const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      if (isNaN(Date.parse(isoDate))) {
-        setError(`ວັນທີ່ບໍ່ຖືກຕ້ອງ ສຳລັບ ${name === 'dob' ? 'ວັນເດືອນປີເກີດ' : name === 'issued_date' ? 'ວັນທີ່ອອກ' : 'ວັນທີ່ໝົດອາຍຮ'}`);
-        setFormData((prev) => ({ ...prev, [name]: '' }));
-      } else {
+      if (!isNaN(Date.parse(isoDate))) {
         setFormData((prev) => ({ ...prev, [name]: isoDate }));
+        setError('');
+        return;
       }
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: '' }));
     }
-    setError('');
+
+    // ຖ້າຮູບແບບຍັງບໍ່ຄົບ ໃຫ້ເກັບຄ່າຊົ່ວຄາວໄວ້ກ່ອນ (ເພື່ອບໍ່ໃຫ້ປຸ່ມພິມຄ້າງ)
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+
+  const [invalidFiles, setInvalidFiles] = useState({
+    customer_request_form: false,
+    request_earmark_account: false,
+    registration_form_credit_card: false,
+    registration_form_gif_fina: false,
+  });
   const handleFileChange = (e, fileType) => {
-    const file = e.target.files[0];
-    if (file && file.type !== 'application/pdf') {
-      setDialogTitle('ຂໍ້ຜິດພາດ');
-      setDialogMessage(`ກະລຸນາອັບໂຫຼດໄຟລ໌ PDF ສຳເລັບ ${fileType}`);
-      setIsErrorDialogOpen(true);
-      setFiles((prev) => ({ ...prev, [fileType]: null }));
-      return;
-    }
-    if (file && file.size > 5 * 1024 * 1024) {
-      setDialogTitle('ຂໍ້ຜິດພາດ');
-      setDialogMessage(`ໄຟລ໌ ${fileType} ມີຂະໜາດໃຫຍ່ເກີນ 5MB`);
-      setIsErrorDialogOpen(true);
-      setFiles((prev) => ({ ...prev, [fileType]: null }));
-      return;
-    }
-    setFiles((prev) => ({ ...prev, [fileType]: file }));
-    setError('');
-  };
+  const file = e.target.files[0];
+
+  if (file && file.type !== 'application/pdf') {
+    e.target.value = '';
+    setFiles((prev) => ({ ...prev, [fileType]: null }));
+    setInvalidFiles((prev) => ({ ...prev, [fileType]: false }));
+    setDialogTitle('ຂໍ້ຜິດພາດ');
+    setDialogMessage(`ກະລຸນາອັບໂຫຼດໄຟລ໌ PDF ສຳລັບ ${fileType}`);
+    setIsErrorDialogOpen(true);
+    return;
+  }
+
+  if (file && file.size > 5 * 1024 * 1024) {
+    e.target.value = '';
+    setFiles((prev) => ({ ...prev, [fileType]: null }));
+    setInvalidFiles((prev) => ({ ...prev, [fileType]: true })); // ✅ mark invalid
+    setDialogTitle('ຂໍ້ຜິດພາດ');
+    setDialogMessage(`ໄຟລ໌ ${fileType} ມີຂະໜາດໃຫຍ່ເກີນ 5MB. ກະລຸນາເລືອກໄຟລ໌ໃໝ່`);
+    setIsErrorDialogOpen(true);
+    return;
+  }
+
+  // ✅ valid
+  setFiles((prev) => ({ ...prev, [fileType]: file }));
+  setInvalidFiles((prev) => ({ ...prev, [fileType]: false }));
+  setError('');
+};
 
   const handleDeleteFile = (fileType) => {
     setFileToDelete(fileType);
@@ -289,14 +314,19 @@ const EditApplicant = () => {
       });
       setDocuments((prev) => ({ ...prev, [fileToDelete]: null }));
       setFiles((prev) => ({ ...prev, [fileToDelete]: null }));
+      setInvalidFiles((prev) => ({ ...prev, [fileToDelete]: false })); // ✅ ເພີ່ມບ່ອນນີ້
+
+      // ✅ ລົບສຳເລັດ: ສະແດງ popup ແຕ່ບໍ່ navigate ອອກ
       setDialogTitle('ສຳເລັດ');
       setDialogMessage(`ໄຟລ໌ ${fileToDelete} ຖືກລົບສຳເລັດ`);
-      setIsErrorDialogOpen(true);
+      setShouldNavigateToFollow(false); // ← ຢູ່ໜ້ານີ້ຕໍ່
+      setIsResultDialogOpen(true);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'ບໍ່ສາມາດລົບໄຟລ໌ໄດ້';
       setDialogTitle('ຂໍ້ຜິດພາດ');
       setDialogMessage(errorMessage);
-      setIsErrorDialogOpen(true);
+      setShouldNavigateToFollow(false);
+      setIsResultDialogOpen(true);
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         window.location.href = '/';
@@ -376,11 +406,21 @@ const EditApplicant = () => {
       return 'FINA CTM ID ແລະ LBB CTM ID ຕ້ອງບໍ່ຊ້ຳກັນ';
     }
 
-    if (!files.registration_form_credit_card && !documents.registration_form_credit_card) {
-      return 'ກະລຸນາອັບໂຫຼດແບບຟອມລົງທະບຽນບັດເຄຣດິດ (ບັງຄັບ)';
-    }
-    if (!files.registration_form_gif_fina && !documents.registration_form_gif_fina) {
-      return 'ກະລຸນາອັບໂຫຼດແບບຟອມລົງທະບຽນ GIF FINA (ບັງຄັບ)';
+    // ✅ ແທນ 2 if ສຸດທ້າຍເກົ່າດ້ວຍໂຕນີ້
+    const requiredFileTypes = [
+      { key: 'registration_form_credit_card', label: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ' },
+      { key: 'registration_form_gif_fina', label: 'ແບບຟອມລົງທະບຽນ GIF FINA' },
+    ];
+
+    for (const { key, label } of requiredFileTypes) {
+      // ກວດໄຟລ໌ >5MB ທີ່ຖືກ reject
+      if (invalidFiles[key]) {
+        return `ໄຟລ໌ ${label} ໃຫຍ່ກວ່າ 5MB. ກະລຸນາເລືອກໄຟລ໌ໃໝ່`;
+      }
+      // ກວດວ່າບໍ່ມີທັງ file ໃໝ່ ແລະ document ເກົ່າ
+      if (!files[key] && !documents[key]) {
+        return `ກະລຸນາອັບໂຫຼດ ${label} (ບັງຄັບ)`;
+      }
     }
 
     return '';

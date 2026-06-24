@@ -1,6 +1,11 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../config/connect_DB');
+
+const {
+  recordFailedLogin,
+  clearLoginAttempts
+} = require('../middlewares/rateLimiter');
 const { ROLES, SUCCESS_MESSAGES, ERROR_MESSAGES } = require('../config/constants');
 const { success, created, badRequest, unauthorized, serverError } = require('../utils/response');
 const logger = require('../utils/logger');
@@ -10,11 +15,11 @@ const logger = require('../utils/logger');
  */
 exports.register = async (req, res) => {
   try {
-    const { id, name, last_name,email, role, password } = req.body;
+    const { id, name, last_name, role, password } = req.body;
 
-    logger.debug('Register request:', { id, name, last_name, email, role });
+    logger.debug('Register request:', { id, name, last_name, role });
 
-    if (!id || !name || !last_name ||!email || !role || !password) {
+    if (!id || !name || !last_name || !role || !password) {
       return badRequest(res, ERROR_MESSAGES.MISSING_FIELDS);
     }
 
@@ -33,15 +38,15 @@ exports.register = async (req, res) => {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const insertQuery = 'INSERT INTO employees (id, name, last_name, email, role, password) VALUES (?, ?, ?, ?, ?, ?)';
+      const insertQuery = 'INSERT INTO employees (id, name, last_name, role, password) VALUES (?, ?, ?, ?, ?)';
 
-      db.query(insertQuery, [id, name, last_name, email, role, hashedPassword], (err, result) => {
+      db.query(insertQuery, [id, name, last_name, role, hashedPassword], (err, result) => {
         if (err) {
           logger.error('Error registering employee:', err);
           return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
         }
         return created(res, SUCCESS_MESSAGES.EMPLOYEE_REGISTERED, {
-          employee: { id, name, last_name, email, role }
+          employee: { id, name, last_name, role }
         });
       });
     });
@@ -70,49 +75,96 @@ exports.login = async (req, res) => {
     }
 
     const loginQuery = 'SELECT * FROM employees WHERE id = ?';
+
     db.query(loginQuery, [id], async (err, results) => {
+
       if (err) {
         logger.error('Error during login:', err);
         return serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
       }
 
+      // ❌ ບໍ່ພົບ user
       if (results.length === 0) {
+
+        recordFailedLogin(req.loginKey);
+
         return badRequest(res, ERROR_MESSAGES.INVALID_CREDENTIALS);
       }
 
       const employee = results[0];
-      const isMatch = await bcrypt.compare(password, employee.password);
 
+      const isMatch = await bcrypt.compare(
+        password,
+        employee.password
+      );
+
+      // ❌ password ຜິດ
       if (!isMatch) {
+
+        recordFailedLogin(req.loginKey);
+
         logger.warn('Failed login attempt for employee:', { id });
-        return badRequest(res, ERROR_MESSAGES.INVALID_CREDENTIALS);
+
+        return badRequest(
+          res,
+          ERROR_MESSAGES.INVALID_CREDENTIALS
+        );
       }
 
+      // ✅ login ສຳເລັດ => reset
+      clearLoginAttempts(req.loginKey);
+
       try {
+
         const token = jwt.sign(
-          { id: employee.id, name: employee.name, role: employee.role },
+          {
+            id: employee.id,
+            name: employee.name,
+            role: employee.role
+          },
           process.env.SECRET,
           { expiresIn: '5h' }
         );
 
-        logger.info('Employee logged in successfully:', { id: employee.id });
-        return success(res, SUCCESS_MESSAGES.LOGIN_SUCCESS, {
-          token,
-          employee: {
-            id: employee.id,
-            name: employee.name,
-            last_name: employee.last_name,
-            role: employee.role
+        logger.info(
+          'Employee logged in successfully:',
+          { id: employee.id }
+        );
+
+        return success(
+          res,
+          SUCCESS_MESSAGES.LOGIN_SUCCESS,
+          {
+            token,
+            employee: {
+              id: employee.id,
+              name: employee.name,
+              last_name: employee.last_name,
+              role: employee.role
+            }
           }
-        });
+        );
+
       } catch (jwtErr) {
+
         logger.error('Error signing JWT:', jwtErr);
-        return serverError(res, 'Error generating token');
+
+        return serverError(
+          res,
+          'Error generating token'
+        );
       }
+
     });
+
   } catch (err) {
+
     logger.error('Error during login:', err);
-    return serverError(res, ERROR_MESSAGES.SERVER_ERROR);
+
+    return serverError(
+      res,
+      ERROR_MESSAGES.SERVER_ERROR
+    );
   }
 };
 
