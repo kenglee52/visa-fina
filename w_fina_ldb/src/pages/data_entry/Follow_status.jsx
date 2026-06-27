@@ -70,7 +70,7 @@ const FollowStatus = () => {
       if (dateTo) params.date_to = format(dateTo, 'yyyy-MM-dd');
 
       console.log('Fetching reports with params:', params);
-      const response = await axios.get(`${API_BASE_URL}/api/follow-report`, {
+      const response = await axios.get(`${API_BASE_URL}/api/data_entry_report`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
@@ -79,26 +79,20 @@ const FollowStatus = () => {
       });
 
       console.log('API Response:', response.data);
-      const total = response.data.total || 0;
-      const limit = response.data.limit || 10;
-      const calculatedTotalPages = Math.ceil(total / limit) || 1;
+
+      // ✅ ໃຊ້ pagination object
+      const { totalPages: tp } = response.data.pagination;
 
       const filteredReports = response.data.data || [];
-      if (statusFilter !== 'all' && filteredReports.length > 0) {
-        const invalidReports = filteredReports.filter(report => report.status !== statusFilter);
-        if (invalidReports.length > 0) {
-          console.warn('Found reports with mismatched status:', invalidReports);
-        }
-      }
 
-      // ✅ ກັບຄືນ sort ແບບເກົ່າ - ໃໝ່ສຸດຢູ່ເທີງ
+      // ✅ sort ໃໝ່ສຸດຢູ່ເທີງ
       const sortedReports = filteredReports.sort((a, b) => {
         return new Date(b.updated_at) - new Date(a.updated_at);
       });
 
       setReports(sortedReports);
-      setTotalPages(calculatedTotalPages);
-      console.log('Page:', page, 'Total Pages:', calculatedTotalPages, 'Reports:', sortedReports.length);
+      setTotalPages(tp || 1);
+      console.log('Page:', page, 'Total Pages:', tp, 'Reports:', sortedReports.length);
     } catch (err) {
       console.error('Error fetching reports:', err);
       setError(err.response?.data?.message || 'ບໍ່ສາມາດດຶງຂໍ້ມູນລາຍງານໄດ້');
@@ -202,7 +196,7 @@ const FollowStatus = () => {
     return gender === 'male' ? 'ຊາຍ' : gender === 'female' ? 'ຍິງ' : '-';
   };
 
- 
+
 
   const showRejectionFeedback = (report) => {
     Swal.fire({
@@ -225,19 +219,19 @@ const FollowStatus = () => {
         applicant={selectedApplicant}
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setSelectedApplicant(null); }}
-        // extraActions={
-        //   isVerifier ? (
-        //     <button
-        //       onClick={() => {
-        //         setIsModalOpen(false);
-        //         handleStatusUpdate(selectedApplicant.applicant_id, 'issued');
-        //       }}
-        //       className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
-        //     >
-        //       ອອກບັດ
-        //     </button>
-        //   ) : null
-        // }
+      // extraActions={
+      //   isVerifier ? (
+      //     <button
+      //       onClick={() => {
+      //         setIsModalOpen(false);
+      //         handleStatusUpdate(selectedApplicant.applicant_id, 'issued');
+      //       }}
+      //       className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
+      //     >
+      //       ອອກບັດ
+      //     </button>
+      //   ) : null
+      // }
 
       />
       <Card className="shadow-2xl rounded-2xl border-2 border-blue-500">

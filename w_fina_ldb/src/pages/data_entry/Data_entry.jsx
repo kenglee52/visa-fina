@@ -219,41 +219,37 @@ const DataEntry = () => {
    */
   const validateRequiredFiles = () => {
     const requiredFiles = [
-      FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD,
-      FILE_TYPES.REGISTRATION_FORM_GIF_FINA,
+      FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD.value,  // ✅
+      FILE_TYPES.REGISTRATION_FORM_GIF_FINA.value,     // ✅
+      FILE_TYPES.CUSTOMER_REQUEST_FORM.value,
+      FILE_TYPES.REQUEST_EARMARK_ACCOUNT.value
     ];
 
-    // 1 MB = 1024 * 1024 Bytes (1,048,576 Bytes)
     const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
     for (const fileType of requiredFiles) {
-      const fileData = files[fileType];
+      const fileData = files[fileType];  // ✅ fileType ຕອນນີ້ເປັນ string
 
-      // 1. ກວດສອບວ່າໄດ້ເລືອກຟາຍແລ້ວຫຼືຍັງ (ບັງຄັບອັບໂຫຼດ)
       if (!fileData) {
         Swal.fire({
           icon: 'warning',
           title: 'ກະລຸນາອັບໂຫຼດຟາຍ!',
-          text: `ທ່ານຍັງບໍ່ໄດ້ອັບໂຫຼດ: ${fileType} (ບັງຄັບ)`,
+          text: `ທ່ານຍັງບໍ່ໄດ້ອັບໂຫຼດ: ${fileType} (ບັງຄັບ)`,  // ✅
           confirmButtonText: 'ຕົກລົງ',
           confirmButtonColor: '#3085d6',
-          customClass: {
-            popup: 'my-custom-popup-class' // ສາມາດໃສ່ class custom ເພີ່ມໄດ້
-          }
         });
         return false;
       }
 
-      // 2. ກວດສອບຂະໜາດຟາຍ (ບໍ່ໃຫ້ເກີນ 1 MB)
-      if (fileData && fileData.size > MAX_FILE_SIZE) {
+      if (fileData.size > MAX_FILE_SIZE) {
         Swal.fire({
           icon: 'error',
           title: 'ຟາຍມີຂະໜາດໃຫຍ່ເກີນໄປ!',
-          html: `ຟາຍ <b>"${fileType}"</b> ມີຂະໜາດເກີນ 5 MB.<br><span style="color: #d33;">ກະລຸນາເລືອກຟາຍໃໝ່ທີ່ມີຂະໜາດໜ້ອຍກວ່າ 1 MB.</span>`,
+          html: `ຟາຍ <b>"${fileType}"</b> ມີຂະໜາດເກີນ 5 MB.`,  // ✅
           confirmButtonText: 'ຕົກລົງ',
           confirmButtonColor: '#d33',
         });
-        return false; // 🛑 ຕັດຈົບທັນທີ ບໍ່ໃຫ້ໄປເຮັດວຽກໃນຂັ້ນຕອນການ Save/Upload ຕໍ່ໄປ
+        return false;
       }
     }
 
@@ -436,7 +432,7 @@ const DataEntry = () => {
               {/* CTM Keys */}
               <div className="space-y-2">
                 <Label htmlFor="fina_ctm_key" className="text-gray-700 font-semibold">
-                  FINA CTM Key
+                  FINA Customer ID
                 </Label>
                 <Input
                   maxLength={20}
@@ -455,7 +451,7 @@ const DataEntry = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="lbd_ctm_key" className="text-gray-700 font-semibold">
-                  LBB CTM ID <span className="text-red-600">*</span>
+                  LBB Customer ID <span className="text-red-600">*</span>
                 </Label>
                 <Input
                   maxLength={20}
@@ -780,23 +776,25 @@ const DataEntry = () => {
               {/* File Uploads */}
               {Object.values(FILE_TYPES).map((fileType) => {
                 const isRequired = [
-                  FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD,
-                  FILE_TYPES.REGISTRATION_FORM_GIF_FINA,
-                ].includes(fileType);
+                  FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD.value,
+                  FILE_TYPES.REGISTRATION_FORM_GIF_FINA.value,
+                  FILE_TYPES.CUSTOMER_REQUEST_FORM.value,
+                  FILE_TYPES.REQUEST_EARMARK_ACCOUNT.value
+                ].includes(fileType.value);
 
                 return (
-                  <div key={fileType} className="space-y-2">
-                    <Label htmlFor={fileType} className="text-gray-700 font-semibold">
-                      {fileType.replace(/_/g, ' ').toUpperCase()} (PDF{isRequired && ', ບັງຄັບ'})
+                  <div key={fileType.value} className="space-y-2">
+                    <Label htmlFor={fileType.value} className="text-gray-700 font-semibold">
+                      {fileType.label}
                       {isRequired && <span className="text-red-600"> *</span>}
                     </Label>
                     <div className="flex items-center space-x-3">
                       <Input
                         type="file"
-                        id={fileType}
-                        name={fileType}
+                        id={fileType.value}
+                        name={fileType.value}
                         accept="application/pdf"
-                        onChange={handleFileInputChange(fileType)}
+                        onChange={handleFileInputChange(fileType.value)}
                         disabled={isSubmitting}
                         required={isRequired}
                         className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 h-10"
@@ -805,20 +803,20 @@ const DataEntry = () => {
                         type="button"
                         variant="destructive"
                         size="icon"
-                        onClick={handleFileClear(fileType)}
-                        disabled={isSubmitting || !files[fileType]}
+                        onClick={handleFileClear(fileType.value)}
+                        disabled={isSubmitting || !files[fileType.value]}
                         className="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600"
                       >
                         X
                       </Button>
                     </div>
-                    {files[fileType] && (
+                    {files[fileType.value] && (
                       <p className="text-sm text-gray-600 mt-2 truncate">
-                        ໄຟລ໌ທີ່ເລືອກ: {files[fileType].name}
+                        ໄຟລ໌ທີ່ເລືອກ: {files[fileType.value].name}
                       </p>
                     )}
-                    {fileErrors[fileType] && (
-                      <p className="text-sm text-red-600">{fileErrors[fileType]}</p>
+                    {fileErrors[fileType.value] && (
+                      <p className="text-sm text-red-600">{fileErrors[fileType.value]}</p>
                     )}
                   </div>
                 );

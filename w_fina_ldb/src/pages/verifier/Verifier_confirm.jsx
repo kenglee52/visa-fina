@@ -229,6 +229,9 @@ const Verifier_confirm = () => {
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
   const statusOptions = [
     { value: 'both', label: 'ທັງໝົດ (ລໍຖ້າ ແລະ ປະຕິເສດ)' },
     { value: 'in_progress', label: 'ລໍຖ້າການຕິດຕາມ' },
@@ -248,6 +251,7 @@ const Verifier_confirm = () => {
     }
   }, []);
 
+
   const fetchApplicants = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -255,51 +259,40 @@ const Verifier_confirm = () => {
       const token = localStorage.getItem('token');
       if (!token) throw new Error('ກະລຸນາເຂົ້າສູ່ລະບົບກ່ອນ');
 
-      let fetchedApplicants = [];
-      let total = 0;
       const limit = 10;
-      const statuses = statusFilter === 'both' ? ['in_progress', 'rejected'] : [statusFilter];
+      const statusParam = statusFilter === 'both' ? undefined : statusFilter;
 
-      for (const status of statuses) {
-        const response = await axios.get(`${API_BASE_URL}/api/verifier-report`, {
-          headers: { Authorization: `Bearer ${token}`, 'Cache-Control': 'no-cache' },
-          params: { page, limit, status },
-        });
-        fetchedApplicants = [...fetchedApplicants, ...response.data.data];
-        total += response.data.total || 0;
-      }
+      const response = await axios.get(`${API_BASE_URL}/api/verifier-report`, {
+        headers: { Authorization: `Bearer ${token}`, 'Cache-Control': 'no-cache' },
+        params: {
+          page,
+          limit,
+          ...(statusParam && { status: statusParam }),
+          ...(searchTerm.trim() && { applicant_id: searchTerm.trim() }),
+          ...(dateFrom && { date_from: dateFrom }),  // ← ເພີ່ມ
+          ...(dateTo && { date_to: dateTo }),         // ← ເພີ່ມ
+        },
+      });
 
+      const fetchedApplicants = response.data.data || [];
+      const tp = response.data.pagination?.totalPages || 1;
+
+      // ✅ filter search ຖ້າພິມ searchTerm
       let filteredApplicants = fetchedApplicants;
       if (searchTerm.trim()) {
         filteredApplicants = fetchedApplicants.filter(a =>
           a.applicant_id?.toString().toLowerCase().includes(searchTerm.trim().toLowerCase())
         );
-        total = filteredApplicants.length;
       }
 
-      // ✅ ຖືກ - in_progress ກ່ອນ, rejected ຫຼັງ, ແລ້ວ updated_at ASC ໃນແຕ່ລະກຸ່ມ
-      const sorted = filteredApplicants.sort((a, b) => {
-        const statusOrder = { in_progress: 0, rejected: 1 };
-        const aOrder = statusOrder[a.status] ?? 2;
-        const bOrder = statusOrder[b.status] ?? 2;
-
-        // ຈັດກຸ່ມກ່ອນ
-        if (aOrder !== bOrder) return aOrder - bOrder;
-
-        // ໃນກຸ່ມດຽວກັນ: ເກົ່າສຸດຢູ່ເທີງ (ASC)
-        return new Date(a.updated_at) - new Date(b.updated_at);
-      });
-
-      const startIndex = (page - 1) * limit;
-      setApplicants(sorted.slice(startIndex, startIndex + limit));
-      setTotalPages(Math.ceil(total / limit) || 1);
+      setApplicants(filteredApplicants);
+      setTotalPages(tp);
     } catch (err) {
       setError(err.response?.data?.message || 'ບໍ່ສາມາດດຶງຂໍ້ມູນຜູ້ສະໝັກໄດ້');
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, searchTerm]);
-
+  }, [page, statusFilter, searchTerm, dateFrom, dateTo]); // ← ເພີ່ມ dateFrom and dateTo
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -409,7 +402,7 @@ const Verifier_confirm = () => {
     }
   };
 
-  const handleRefresh = () => { setStatusFilter('both'); setPage(1); setSearchTerm(''); fetchApplicants(); };
+  const handleRefresh = () => { setStatusFilter('both'); setPage(1); setSearchTerm(''); setDateFrom(''); setDateTo(''); fetchApplicants(); };
 
   // Formatters
   const formatters = {
@@ -454,9 +447,27 @@ const Verifier_confirm = () => {
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               className="w-full sm:w-48 h-10 border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao"
             />
-            <Button onClick={handleRefresh} className="w-full sm:w-10 h-10 bg-orange-600 hover:bg-orange-700 text-white rounded-md">
+            {/* <Button onClick={handleRefresh} className="w-full sm:w-10 h-10 bg-orange-600 hover:bg-orange-700 text-white rounded-md">
               <RefreshCcw className="h-5 w-5" />
-            </Button>
+            </Button> */}
+            <div className="flex flex-col sm:flex-row gap-2 items-center">
+              <Button onClick={handleRefresh} className="w-full sm:w-10 h-10 bg-orange-600 hover:bg-orange-700 text-white rounded-md">
+                <RefreshCcw className="h-5 w-5" />
+              </Button>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                className="w-full sm:w-40 h-10 border-blue-500 rounded-md"
+              />
+              <span className="text-blue-600 font-semibold">-</span>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                className="w-full sm:w-40 h-10 border-blue-500 rounded-md"
+              />
+            </div>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
               <SelectTrigger className="w-full sm:w-48 h-10 border-blue-500 text-blue-600 rounded-md font-noto-sans-lao">
                 <SelectValue placeholder="ກັ່ນຕອງຕາມສະຖານະ" />

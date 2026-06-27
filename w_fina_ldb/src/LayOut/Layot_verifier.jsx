@@ -292,6 +292,7 @@ const Layout_verifier = () => {
           <div className="flex items-center space-x-4">
             <img src="/fina.png" alt="Fina Logo" className="h-10 w-auto" />
             <img src="/im1.png" alt="LDB Logo" className="h-10 w-auto" />
+            <img src="/laoloca.png" alt="LOCA Logo" className="h-10 w-auto" />
           </div>
 
           {/* Desktop Nav */}

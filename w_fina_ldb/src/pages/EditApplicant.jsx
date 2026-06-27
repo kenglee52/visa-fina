@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { API_BASE_URL } from '@/config/env.config';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Swal from 'sweetalert2';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -270,33 +271,33 @@ const EditApplicant = () => {
     registration_form_gif_fina: false,
   });
   const handleFileChange = (e, fileType) => {
-  const file = e.target.files[0];
+    const file = e.target.files[0];
 
-  if (file && file.type !== 'application/pdf') {
-    e.target.value = '';
-    setFiles((prev) => ({ ...prev, [fileType]: null }));
+    if (file && file.type !== 'application/pdf') {
+      e.target.value = '';
+      setFiles((prev) => ({ ...prev, [fileType]: null }));
+      setInvalidFiles((prev) => ({ ...prev, [fileType]: false }));
+      setDialogTitle('ຂໍ້ຜິດພາດ');
+      setDialogMessage(`ກະລຸນາອັບໂຫຼດໄຟລ໌ PDF ສຳລັບ ${fileType}`);
+      setIsErrorDialogOpen(true);
+      return;
+    }
+
+    if (file && file.size > 5 * 1024 * 1024) {
+      e.target.value = '';
+      setFiles((prev) => ({ ...prev, [fileType]: null }));
+      setInvalidFiles((prev) => ({ ...prev, [fileType]: true })); // ✅ mark invalid
+      setDialogTitle('ຂໍ້ຜິດພາດ');
+      setDialogMessage(`ໄຟລ໌ ${fileType} ມີຂະໜາດໃຫຍ່ເກີນ 5MB. ກະລຸນາເລືອກໄຟລ໌ໃໝ່`);
+      setIsErrorDialogOpen(true);
+      return;
+    }
+
+    // ✅ valid
+    setFiles((prev) => ({ ...prev, [fileType]: file }));
     setInvalidFiles((prev) => ({ ...prev, [fileType]: false }));
-    setDialogTitle('ຂໍ້ຜິດພາດ');
-    setDialogMessage(`ກະລຸນາອັບໂຫຼດໄຟລ໌ PDF ສຳລັບ ${fileType}`);
-    setIsErrorDialogOpen(true);
-    return;
-  }
-
-  if (file && file.size > 5 * 1024 * 1024) {
-    e.target.value = '';
-    setFiles((prev) => ({ ...prev, [fileType]: null }));
-    setInvalidFiles((prev) => ({ ...prev, [fileType]: true })); // ✅ mark invalid
-    setDialogTitle('ຂໍ້ຜິດພາດ');
-    setDialogMessage(`ໄຟລ໌ ${fileType} ມີຂະໜາດໃຫຍ່ເກີນ 5MB. ກະລຸນາເລືອກໄຟລ໌ໃໝ່`);
-    setIsErrorDialogOpen(true);
-    return;
-  }
-
-  // ✅ valid
-  setFiles((prev) => ({ ...prev, [fileType]: file }));
-  setInvalidFiles((prev) => ({ ...prev, [fileType]: false }));
-  setError('');
-};
+    setError('');
+  };
 
   const handleDeleteFile = (fileType) => {
     setFileToDelete(fileType);
@@ -410,6 +411,8 @@ const EditApplicant = () => {
     const requiredFileTypes = [
       { key: 'registration_form_credit_card', label: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ' },
       { key: 'registration_form_gif_fina', label: 'ແບບຟອມລົງທະບຽນ GIF FINA' },
+      { key: 'customer_request_form', label: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ' },        // ✅ ເພີ່ມ
+      { key: 'request_earmark_account', label: 'ໃບສະເໜີຂໍ Block ບັນຊີ' },
     ];
 
     for (const { key, label } of requiredFileTypes) {
@@ -481,10 +484,27 @@ const EditApplicant = () => {
         registration_form_credit_card: null,
         registration_form_gif_fina: null,
       });
-      setDialogTitle('ສຳເລັດ');
-      setDialogMessage(response.data.message || 'ຂໍ້ມູນຖືກແກ້ໄຂສຳເລັດ');
-      setIsErrorDialogOpen(true);
-      setTimeout(() => navigate(-1), 1500);
+      // setDialogTitle('ສຳເລັດ');
+      // setDialogMessage(response.data.message || 'ຂໍ້ມູນຖືກແກ້ໄຂສຳເລັດ');
+      // // setIsErrorDialogOpen(true);
+      // // setTimeout(() => navigate('/data-entry/status'), 1500);
+      // toast.success("ຂໍ້ມູນຖືກແກ້ໄຂສຳເລັດ");
+      // setTimeout(() => navigate("/data-entry/status"), 1500);
+
+      Swal.fire({
+        title: "ສຳເລັດ",
+        icon: "success",
+        text: "ແກ້ໄຂຂໍ້ມູນສຳເລັດ",
+        timer: 1500,
+        // showConfirmButton: false
+      });
+      navigate("/data-entry/status")
+      // .then((result)=> {
+      //   if(result.isConfirmed){
+      //     navigate("/data-entry/status");
+      //   }
+      // })
+
     } catch (err) {
       console.error('Error updating applicant:', err);
       const errorMessage = err.response?.data?.message || 'ບໍ່ສາມາດແກ້ໄຂຂໍ້ມູນໄດ້';
@@ -788,13 +808,13 @@ const EditApplicant = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">ແບບຟອມຄຳຂໍຂອງລູກຄ້າ (PDF, ບໍ່ບັງຄັບ)</label>
+                <label className="block text-sm font-medium text-gray-700">ແບບຟອມຄຳຂໍຂອງລູກຄ້າ (PDF, ບັງຄັບ)<span className="text-red-600">*</span></label>
                 <Input
                   type="file"
                   accept=".pdf"
                   name="customer_request_form"
                   onChange={(e) => handleFileChange(e, 'customer_request_form')}
-                  className="mt-1 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
+                  className={`mt-1 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors ${getFieldError('ແບບຟອມຄຳຂໍຂອງລູກຄ້າ')}`}
                 />
                 {documents.customer_request_form && (
                   <div className="flex items-center space-x-2 mt-1">
@@ -818,15 +838,18 @@ const EditApplicant = () => {
                 {files.customer_request_form && (
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.customer_request_form.name}</p>
                 )}
+                {error.includes('ແບບຟອມຄຳຂໍຂອງລູກຄ້າ') && (
+                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມຄຳຂໍຂອງລູກຄ້າ</span>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">ໃບສະເໜີຂໍ Block ບັນຊີ (PDF, ບໍ່ບັງຄັບ)</label>
+                <label className="block text-sm font-medium text-gray-700">ໃບສະເໜີຂໍ Block ບັນຊີ (PDF, ບັງຄັບ)<span className="text-red-600">*</span></label>
                 <Input
                   type="file"
                   accept=".pdf"
                   name="request_earmark_account"
                   onChange={(e) => handleFileChange(e, 'request_earmark_account')}
-                  className="mt-1 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
+                  className={`mt-1 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors ${getFieldError('ໃບສະເໜີຂໍ Block ບັນຊີ')}`}
                 />
                 {documents.request_earmark_account && (
                   <div className="flex items-center space-x-2 mt-1">
@@ -849,6 +872,9 @@ const EditApplicant = () => {
                 )}
                 {files.request_earmark_account && (
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.request_earmark_account.name}</p>
+                )}
+                {error.includes('ໃບສະເໜີຂໍ Block ບັນຊີ') && (
+                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມໃບສະເໜີຂໍ Block ບັນຊີ</span>
                 )}
               </div>
               <div>

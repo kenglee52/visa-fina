@@ -18,14 +18,33 @@ export const DOCUMENT_TYPES = [
   { value: 'other', label: 'ອື່ນໆ' },
 ];
 
+// // File Types for Applicant Documents
+// export const FILE_TYPES = {
+//   CUSTOMER_REQUEST_FORM: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ',
+//   REQUEST_EARMARK_ACCOUNT: 'ສັນຍານໍາໃຊ້ບັດສາກົນ',
+//   REGISTRATION_FORM_CREDIT_CARD: 'ແບບຟອມລົງທະບຽນຂໍນໍາໃຊ້ບັດສາກົນ',
+//   REGISTRATION_FORM_GIF_FINA: 'ແບບຟອມຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ',
+// };
+
 // File Types for Applicant Documents
 export const FILE_TYPES = {
-  CUSTOMER_REQUEST_FORM: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ',
-  REQUEST_EARMARK_ACCOUNT: 'ສັນຍານໍາໃຊ້ບັດສາກົນ',
-  REGISTRATION_FORM_CREDIT_CARD: 'ແບບຟອມລົງທະບຽນຂໍນໍາໃຊ້ບັດສາກົນ',
-  REGISTRATION_FORM_GIF_FINA: 'ແບບຟອມຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ',
+  CUSTOMER_REQUEST_FORM: { 
+    value: 'customer_request_form', 
+    label: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ' 
+  },
+  REQUEST_EARMARK_ACCOUNT: { 
+    value: 'request_earmark_account', 
+    label: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ' 
+  },
+  REGISTRATION_FORM_CREDIT_CARD: { 
+    value: 'registration_form_credit_card', 
+    label: 'ແບບຟອມລົງທະບຽນຂໍນໍາໃຊ້ບັດສາກົນ' 
+  },
+  REGISTRATION_FORM_GIF_FINA: { 
+    value: 'registration_form_gif_fina', 
+    label: 'ແບບຟອມຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ' 
+  },
 };
-
 // Relationship Statuses
 export const RELATIONSHIP_STATUSES = [
   { value: 'single', label: 'ໂສດ' },

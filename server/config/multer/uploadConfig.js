@@ -11,21 +11,22 @@ const storage = multer.diskStorage({
       registration_form_gif_fina: 'applicant_documents/registration_form_gif_fina/',
 
     };
-    const uploadDir = path.join(__dirname, '../', folderMap[file.fieldname]);
+    // ✅ ໃໝ່ - '../../' = server/
+    const uploadDir = path.join(__dirname, '../../', folderMap[file.fieldname]);
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-  const applicant_id = req.params?.applicant_id || req.body.applicant_id;
-  if (!applicant_id) {
-    return cb(new Error("Applicant ID is required for file upload"));
-  }
-  const ext = path.extname(file.originalname).toLowerCase();
-  const uniqueSuffix = `${applicant_id}_${Date.now()}`;
-  cb(null, `${uniqueSuffix}${ext}`);
-},
+    const applicant_id = req.params?.applicant_id || req.body.applicant_id;
+    if (!applicant_id) {
+      return cb(new Error("Applicant ID is required for file upload"));
+    }
+    const ext = path.extname(file.originalname).toLowerCase();
+    const uniqueSuffix = `${applicant_id}_${Date.now()}`;
+    cb(null, `${uniqueSuffix}${ext}`);
+  },
 
 });
 

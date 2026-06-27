@@ -58,19 +58,10 @@ const Issued = () => {
 
       console.log('API Response for checked:', response.data);
       const fetchedApplicants = response.data.data || [];
-      const total = response.data.total || 0;
+      const tp = response.data.pagination?.totalPages || 1;
 
-      // ✅ ໃໝ່ - ເກົ່າສຸດຢູ່ເທີງ
-      const sortedApplicants = fetchedApplicants.sort((a, b) => {
-        return new Date(a.updated_at) - new Date(b.updated_at);
-      });
-
-      const startIndex = (page - 1) * limit;
-      const paginatedApplicants = sortedApplicants.slice(startIndex, startIndex + limit);
-      const calculatedTotalPages = Math.ceil(total / limit) || 1;
-
-      setApplicants(paginatedApplicants);
-      setTotalPages(calculatedTotalPages);
+      setApplicants(fetchedApplicants);
+      setTotalPages(tp);
     } catch (err) {
       console.error('Error fetching applicants:', err);
       setError(err.response?.data?.message || 'ບໍ່ສາມາດດຶງຂໍ້ມູນຜູ້ສະໝັກໄດ້');
@@ -294,19 +285,19 @@ const Issued = () => {
         applicant={selectedApplicant}
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setSelectedApplicant(null); }}
-        // extraActions={
-        //   isVerifier ? (
-        //     <button
-        //       onClick={() => {
-        //         setIsModalOpen(false);
-        //         handleStatusUpdate(selectedApplicant.applicant_id, 'issued');
-        //       }}
-        //       className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
-        //     >
-        //       ອອກບັດ
-        //     </button>
-        //   ) : null
-        // }
+      // extraActions={
+      //   isVerifier ? (
+      //     <button
+      //       onClick={() => {
+      //         setIsModalOpen(false);
+      //         handleStatusUpdate(selectedApplicant.applicant_id, 'issued');
+      //       }}
+      //       className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
+      //     >
+      //       ອອກບັດ
+      //     </button>
+      //   ) : null
+      // }
 
       />
 
@@ -423,7 +414,7 @@ const Issued = () => {
                             className="border-blue-500 text-blue-500 hover:bg-blue-100"
                             aria-label={`ອອກບັດຜູ້ສະໝັກ ${applicant.applicant_id}`}
                           >
-                            ອອກບັດ
+                            ອອກບັດແລ້ວ
                           </Button>
                         )}
                       </div>
