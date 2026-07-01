@@ -402,7 +402,7 @@ const Verifier_confirm = () => {
     }
   };
 
-  const handleRefresh = () => { setStatusFilter('both'); setPage(1); setSearchTerm(''); setDateFrom(''); setDateTo(''); fetchApplicants(); };
+  const handleRefresh = () => { setStatusFilter('both'); setPage(1); setSearchTerm(''); setDateFrom(''); setDateTo('')};
 
   // Formatters
   const formatters = {
@@ -467,8 +467,7 @@ const Verifier_confirm = () => {
                 onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
                 className="w-full sm:w-40 h-10 border-blue-500 rounded-md"
               />
-            </div>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
               <SelectTrigger className="w-full sm:w-48 h-10 border-blue-500 text-blue-600 rounded-md font-noto-sans-lao">
                 <SelectValue placeholder="ກັ່ນຕອງຕາມສະຖານະ" />
               </SelectTrigger>
@@ -478,6 +477,17 @@ const Verifier_confirm = () => {
                 ))}
               </SelectContent>
             </Select>
+            </div>
+            {/* <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+              <SelectTrigger className="w-full sm:w-48 h-10 border-blue-500 text-blue-600 rounded-md font-noto-sans-lao">
+                <SelectValue placeholder="ກັ່ນຕອງຕາມສະຖານະ" />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map(o => (
+                  <SelectItem key={o.value} value={o.value} className="text-blue-600">{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select> */}
           </div>
 
           {loading ? (

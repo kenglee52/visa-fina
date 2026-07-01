@@ -195,11 +195,11 @@ exports.getDataEntryReport = (req, res) => {
     queryParams.push(applicant_id);
   }
   if (date_from) {
-    query += ` AND DATE(a.created_at) >= ?`;
+    query += ` AND DATE(a.updated_at) >= ?`;
     queryParams.push(date_from);
   }
   if (date_to) {
-    query += ` AND DATE(a.created_at) <= ?`;
+    query += ` AND DATE(a.updated_at) <= ?`;
     queryParams.push(date_to);
   }
 
@@ -264,11 +264,11 @@ exports.getDataEntryReport = (req, res) => {
         countParams.push(applicant_id);
       }
       if (date_from) {
-        countQuery += ` AND DATE(a.created_at) >= ?`;
+        countQuery += ` AND DATE(a.updated_at) >= ?`;
         countParams.push(date_from);
       }
       if (date_to) {
-        countQuery += ` AND DATE(a.created_at) <= ?`;
+        countQuery += ` AND DATE(a.updated_at) <= ?`;
         countParams.push(date_to);
       }
 
@@ -350,11 +350,11 @@ exports.getReport = (req, res) => {
     queryParams.push(applicant_id);
   }
   if (date_from) {
-    query += ` AND DATE(a.created_at) >= ?`;
+    query += ` AND DATE(a.updated_at) >= ?`;
     queryParams.push(date_from);
   }
   if (date_to) {
-    query += ` AND DATE(a.created_at) <= ?`;
+    query += ` AND DATE(a.updated_at) <= ?`;
     queryParams.push(date_to);
   }
 
@@ -419,11 +419,11 @@ exports.getReport = (req, res) => {
         countParams.push(applicant_id);
       }
       if (date_from) {
-        countQuery += ` AND DATE(a.created_at) >= ?`;
+        countQuery += ` AND DATE(a.updated_at) >= ?`;
         countParams.push(date_from);
       }
       if (date_to) {
-        countQuery += ` AND DATE(a.created_at) <= ?`;
+        countQuery += ` AND DATE(a.updated_at) <= ?`;
         countParams.push(date_to);
       }
 
@@ -505,11 +505,11 @@ exports.getVerifierReport = (req, res) => {
     queryParams.push(applicant_id);
   }
   if (date_from) {
-    query += ` AND DATE(a.created_at) >= ?`;
+    query += ` AND DATE(a.updated_at) >= ?`;
     queryParams.push(date_from);
   }
   if (date_to) {
-    query += ` AND DATE(a.created_at) <= ?`;
+    query += ` AND DATE(a.updated_at) <= ?`;
     queryParams.push(date_to);
   }
 
@@ -585,11 +585,11 @@ exports.getVerifierReport = (req, res) => {
         countParams.push(applicant_id);
       }
       if (date_from) {
-        countQuery += ` AND DATE(a.created_at) >= ?`;
+        countQuery += ` AND DATE(a.updated_at) >= ?`;
         countParams.push(date_from);
       }
       if (date_to) {
-        countQuery += ` AND DATE(a.created_at) <= ?`;
+        countQuery += ` AND DATE(a.updated_at) <= ?`;
         countParams.push(date_to);
       }
 

@@ -25,7 +25,8 @@ const FILE_TYPES = {
   CUSTOMER_REQUEST_FORM: 'customer_request_form',
   REQUEST_EARMARK_ACCOUNT: 'request_earmark_account',
   REGISTRATION_FORM_CREDIT_CARD: 'registration_form_credit_card',
-  REGISTRATION_FORM_GIF_FINA: 'registration_form_gif_fina'
+  REGISTRATION_FORM_GIF_FINA: 'registration_form_gif_fina',
+  FILE_TYP_5: 'file_typ_5', // ✅ ເພີ່ມໃໝ່
 };
 
 // Gender
@@ -109,6 +110,7 @@ const ERROR_MESSAGES = {
   FILE_UPLOAD_FAILED: 'Failed to upload file',
   REGISTRATION_FORM_CREDIT_CARD_REQUIRED: 'Registration form credit card file is required',
   REGISTRATION_FORM_GIF_FINA_REQUIRED: 'Registration form GIF FINA file is required',
+  FILE_TYP_5_REQUIRED: 'File typ 5 is required',
 
   // Server
   SERVER_ERROR: 'Internal server error',

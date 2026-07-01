@@ -9,6 +9,7 @@ const storage = multer.diskStorage({
       request_earmark_account: 'applicant_documents/request_earmark_account/',
       registration_form_credit_card: 'applicant_documents/registration_form_credit_card/',
       registration_form_gif_fina: 'applicant_documents/registration_form_gif_fina/',
+      file_typ_5: 'applicant_documents/file_typ_5/', // ✅ ເພີ່ມໃໝ່
 
     };
     // ✅ ໃໝ່ - '../../' = server/
@@ -47,6 +48,7 @@ const upload = multer({
   { name: 'request_earmark_account', maxCount: 1 },
   { name: 'registration_form_credit_card', maxCount: 1 },
   { name: 'registration_form_gif_fina', maxCount: 1 },
+  { name: 'file_typ_5', maxCount: 1 }, // ✅ ເພີ່ມໃໝ່
 
 ]);
 

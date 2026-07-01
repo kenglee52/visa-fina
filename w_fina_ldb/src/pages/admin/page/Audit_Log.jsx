@@ -33,8 +33,7 @@ const Audit_Log = () => {
     applicant_id: '',
     action: '',
     status: '',
-    date_from: '',
-    date_to: '',
+    date: '', // ✅ ເຫຼືອຊ່ອງດຽວ ແທນ date_from / date_to
   });
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -49,16 +48,21 @@ const Audit_Log = () => {
       return;
     }
 
-    if (filters.date_from && filters.date_to && new Date(filters.date_from) > new Date(filters.date_to)) {
-      setError('ວັນທີ່ເລີ່ມຕ້ອງກ່ອນຫຼືເທົ່າກັບວັນທີ່ສິ້ນສຸດ');
-      setLoading(false);
-      return;
-    }
+    // ✅ ສົ່ງ date_from ແລະ date_to ເປັນວັນດຽວກັນ ເພື່ອຄົ້ນຫາສະເພາະວັນນັ້ນ
+    const params = {
+      applicant_id: filters.applicant_id,
+      action: filters.action,
+      status: filters.status,
+      date_from: filters.date || undefined,
+      date_to: filters.date || undefined,
+      page,
+      limit,
+    };
 
     axios
       .get(`${API_BASE_URL}/api/log-report`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { ...filters, page, limit },
+        params,
       })
       .then((res) => {
         setLogs(res.data.data || []);
@@ -102,8 +106,7 @@ const Audit_Log = () => {
       applicant_id: '',
       action: '',
       status: '',
-      date_from: '',
-      date_to: '',
+      date: '',
     });
     setPage(1);
     fetchLogs();
@@ -162,20 +165,15 @@ const Audit_Log = () => {
             </option>
           ))}
         </select>
+
+        {/* ✅ ຊ່ອງວັນທີ່ດຽວ ແທນ 2 ຊ່ອງ */}
         <input
           type="date"
-          value={filters.date_from}
-          onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
+          value={filters.date}
+          onChange={(e) => setFilters({ ...filters, date: e.target.value })}
           className="h-12 border-2 border-blue-500 rounded-md px-4 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 font-blacked-black"
-          max={filters.date_to || undefined}
         />
-        <input
-          type="date"
-          value={filters.date_to}
-          onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
-          className="h-12 border-2 border-blue-500 rounded-md px-4 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-300 font-blacked-black"
-          min={filters.date_from || undefined}
-        />
+
         <button
           type="submit"
           className="h-12 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-base sm:text-lg font-blacked-black"
@@ -213,7 +211,6 @@ const Audit_Log = () => {
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Name</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Surname</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Data Entry</th>
-                {/* ✅ ປ່ຽນ header ຈາກ "verifie" -> "Verifier" */}
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Verifier</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Action</th>
                 <th className="p-3 text-left text-base sm:text-lg font-blacked-black">Status</th>
@@ -229,7 +226,6 @@ const Audit_Log = () => {
                   <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.applicant_name)}</td>
                   <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.applicant_surname)}</td>
                   <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.data_entry_employee_id)}</td>
-                  {/* ✅ ປ່ຽນຈາກ log.employee_id -> log.verifier_id */}
                   <td className="p-3 text-base sm:text-lg font-blacked-black">{formatField(log.verifier_id)}</td>
                   <td className="p-3 text-base sm:text-lg font-blacked-black">
                     {formatField(actionOptions.find((a) => a.value === log.action)?.label || log.action)}

@@ -28,21 +28,26 @@ export const DOCUMENT_TYPES = [
 
 // File Types for Applicant Documents
 export const FILE_TYPES = {
-  CUSTOMER_REQUEST_FORM: { 
-    value: 'customer_request_form', 
-    label: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ' 
+  CUSTOMER_REQUEST_FORM: {
+    value: 'customer_request_form',
+    label: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ'
   },
-  REQUEST_EARMARK_ACCOUNT: { 
-    value: 'request_earmark_account', 
-    label: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ' 
+  REQUEST_EARMARK_ACCOUNT: {
+    value: 'request_earmark_account',
+    label: 'ໃບສະເໜີຂໍ Block ບັນຊີ'
   },
-  REGISTRATION_FORM_CREDIT_CARD: { 
-    value: 'registration_form_credit_card', 
-    label: 'ແບບຟອມລົງທະບຽນຂໍນໍາໃຊ້ບັດສາກົນ' 
+  REGISTRATION_FORM_CREDIT_CARD: {
+    value: 'registration_form_credit_card',
+    label: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ'
   },
-  REGISTRATION_FORM_GIF_FINA: { 
-    value: 'registration_form_gif_fina', 
-    label: 'ແບບຟອມຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ' 
+  REGISTRATION_FORM_GIF_FINA: {
+    value: 'registration_form_gif_fina',
+    label: 'ແບບຟອມລົງທະບຽນ GIF FINA'
+  },
+  // ✅ ເພີ່ມໃໝ່
+  FILE_TYP_5: {
+    value: 'file_typ_5',
+    label: 'ຊື່ໄຟລ໌ 5'
   },
 };
 // Relationship Statuses

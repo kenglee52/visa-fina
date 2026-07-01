@@ -222,7 +222,8 @@ const DataEntry = () => {
       FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD.value,  // ✅
       FILE_TYPES.REGISTRATION_FORM_GIF_FINA.value,     // ✅
       FILE_TYPES.CUSTOMER_REQUEST_FORM.value,
-      FILE_TYPES.REQUEST_EARMARK_ACCOUNT.value
+      FILE_TYPES.REQUEST_EARMARK_ACCOUNT.value,
+      FILE_TYPES.FILE_TYP_5.value, // ✅ ເພີ່ມໃໝ່
     ];
 
     const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -779,7 +780,8 @@ const DataEntry = () => {
                   FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD.value,
                   FILE_TYPES.REGISTRATION_FORM_GIF_FINA.value,
                   FILE_TYPES.CUSTOMER_REQUEST_FORM.value,
-                  FILE_TYPES.REQUEST_EARMARK_ACCOUNT.value
+                  FILE_TYPES.REQUEST_EARMARK_ACCOUNT.value,
+                  FILE_TYPES.FILE_TYP_5.value, // ✅ ເພີ່ມໃໝ່
                 ].includes(fileType.value);
 
                 return (

@@ -80,6 +80,7 @@ exports.getApplicant = (req, res) => {
         request_earmark_account: null,
         registration_form_credit_card: null,
         registration_form_gif_fina: null,
+        file_typ_5: null,
       };
 
       documentResults.forEach((doc) => {
@@ -103,8 +104,12 @@ exports.uploadDocuments = (req, res) => {
   upload(req, res, (err) => {
     if (err) {
       logger.error('Upload error:', err);
+      console.error('❌ MULTER ERROR:', err); // ✅ ເພີ່ມ
       return badRequest(res, err.message || ERROR_MESSAGES.FILE_UPLOAD_FAILED);
     }
+
+    console.log('✅ req.files received:', Object.keys(req.files || {})); // ✅ ເພີ່ມ
+    console.log('✅ req.body:', req.body); // ✅ ເພີ່ມ
 
     const { applicant_id } = req.body;
     const data_entry_employee_id = req.user?.id;
@@ -115,11 +120,29 @@ exports.uploadDocuments = (req, res) => {
     if (!data_entry_employee_id) {
       return unauthorized(res, ERROR_MESSAGES.TOKEN_MISSING);
     }
-    if (!req.files || !req.files['registration_form_credit_card']) {
-      return badRequest(res, ERROR_MESSAGES.REGISTRATION_FORM_CREDIT_CARD_REQUIRED);
-    }
-    if (!req.files || !req.files['registration_form_gif_fina']) {
-      return badRequest(res, ERROR_MESSAGES.REGISTRATION_FORM_GIF_FINA_REQUIRED);
+    // if (!req.files || !req.files['registration_form_credit_card']) {
+    //   return badRequest(res, ERROR_MESSAGES.REGISTRATION_FORM_CREDIT_CARD_REQUIRED);
+    // }
+    // if (!req.files || !req.files['registration_form_gif_fina']) {
+    //   return badRequest(res, ERROR_MESSAGES.REGISTRATION_FORM_GIF_FINA_REQUIRED);
+    // }
+    // // ✅ ເພີ່ມໃໝ່
+    // if (!req.files || !req.files['file_typ_5']) {
+    //   return badRequest(res, ERROR_MESSAGES.FILE_TYP_5_REQUIRED);
+    // }
+    // ✅ ແກ້ໃຫ້ກວດທຸກໄຟລ໌ທີ່ບັງຄັບ
+    const requiredFileTypes = [
+      'registration_form_credit_card',
+      'registration_form_gif_fina',
+      'customer_request_form',
+      'request_earmark_account',
+      'file_typ_5',
+    ];
+
+    for (const ft of requiredFileTypes) {
+      if (!req.files || !req.files[ft]) {
+        return badRequest(res, `${ft} is required`);
+      }
     }
 
     db.getConnection((err, connection) => {
@@ -151,33 +174,67 @@ exports.uploadDocuments = (req, res) => {
             });
           }
 
+          // const insertQuery = 'INSERT INTO applicant_documents (applicant_id, file_type, file_path) VALUES (?, ?, ?)';
+          // const uploadedFiles = [];
+          // const errors = [];
+          // const fileTypes = Object.values(FILE_TYPES);
+
+          // let filesProcessed = 0;
+          // const filesToProcess = fileTypes.filter(ft => req.files[ft]).length;
+
+          // fileTypes.forEach((fileType) => {
+          //   if (!req.files[fileType]) {
+          //     filesProcessed++;
+          //     if (filesProcessed === filesToProcess) {
+          //       finalizeUpload();
+          //     }
+          //     return;
+          //   }
+          //   const file = req.files[fileType][0];
+          //   const file_path = `applicant_documents/${fileType}/${file.filename}`;
+
+          //   connection.query(insertQuery, [applicant_id, fileType, file_path], (insertErr) => {
+          //     if (insertErr) {
+          //       errors.push(`Failed to store ${fileType}: ${insertErr.message}`);
+          //     } else {
+          //       uploadedFiles.push({ applicant_id, file_type: fileType, file_path });
+          //     }
+          //     filesProcessed++;
+          //     if (filesProcessed === filesToProcess) {
+          //       finalizeUpload();
+          //     }
+          //   });
+          // });
           const insertQuery = 'INSERT INTO applicant_documents (applicant_id, file_type, file_path) VALUES (?, ?, ?)';
           const uploadedFiles = [];
           const errors = [];
           const fileTypes = Object.values(FILE_TYPES);
 
-          let filesProcessed = 0;
-          const filesToProcess = fileTypes.filter(ft => req.files[ft]).length;
+          // ✅ ກັ່ນສະເພາະໄຟລ໌ທີ່ມາຈິງໆ
+          const presentFiles = fileTypes.filter(ft => req.files && req.files[ft]);
 
-          fileTypes.forEach((fileType) => {
-            if (!req.files[fileType]) {
-              filesProcessed++;
-              if (filesProcessed === filesToProcess) {
-                finalizeUpload();
-              }
-              return;
-            }
+          console.log('📁 Files to process:', presentFiles); // debug
+
+          // ✅ ຖ້າບໍ່ມີໄຟລ໌ເລີຍ
+          if (presentFiles.length === 0) {
+            return badRequest(res, 'No files uploaded');
+          }
+
+          let filesProcessed = 0;
+
+          presentFiles.forEach((fileType) => {
             const file = req.files[fileType][0];
             const file_path = `applicant_documents/${fileType}/${file.filename}`;
 
             connection.query(insertQuery, [applicant_id, fileType, file_path], (insertErr) => {
               if (insertErr) {
+                console.error('❌ Insert error:', insertErr); // debug
                 errors.push(`Failed to store ${fileType}: ${insertErr.message}`);
               } else {
                 uploadedFiles.push({ applicant_id, file_type: fileType, file_path });
               }
               filesProcessed++;
-              if (filesProcessed === filesToProcess) {
+              if (filesProcessed === presentFiles.length) {
                 finalizeUpload();
               }
             });
@@ -372,7 +429,7 @@ exports.createApplicant = (req, res) => {
               return connection.rollback(() => {
                 connection.release();
                 serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
-              }); 
+              });
             }
 
             if (docCheckResults.length > 0) {
@@ -423,36 +480,36 @@ exports.createApplicant = (req, res) => {
 
               const applicantId = result.insertId;
               connection.commit((commitErr) => {
-                  if (commitErr) {
-                    logger.error('Error committing transaction:', commitErr);
-                    return connection.rollback(() => {
-                      connection.release();
-                      serverError(res, ERROR_MESSAGES.TRANSACTION_ERROR);
-                    });
-                  }
-                  connection.release();
-                  return created(res, SUCCESS_MESSAGES.APPLICANT_CREATED, {
-                    applicant: {
-                      id: applicantId,
-                      fina_ctm_key,
-                      lbd_ctm_key,
-                      credit_rating,
-                      name,
-                      surname,
-                      dob,
-                      village,
-                      gender,
-                      province_id,
-                      district_id,
-                      relationship_status,
-                      doc_type,
-                      doc_number,
-                      issued_by,
-                      issued_date,
-                      expiry_date,
-                    },
+                if (commitErr) {
+                  logger.error('Error committing transaction:', commitErr);
+                  return connection.rollback(() => {
+                    connection.release();
+                    serverError(res, ERROR_MESSAGES.TRANSACTION_ERROR);
                   });
-                }); // End commit // End audit query
+                }
+                connection.release();
+                return created(res, SUCCESS_MESSAGES.APPLICANT_CREATED, {
+                  applicant: {
+                    id: applicantId,
+                    fina_ctm_key,
+                    lbd_ctm_key,
+                    credit_rating,
+                    name,
+                    surname,
+                    dob,
+                    village,
+                    gender,
+                    province_id,
+                    district_id,
+                    relationship_status,
+                    doc_type,
+                    doc_number,
+                    issued_by,
+                    issued_date,
+                    expiry_date,
+                  },
+                });
+              }); // End commit // End audit query
             }); // End insert query
           }); // End document check query
         }); // End location query
@@ -589,14 +646,14 @@ const deleteOldFile = (applicant_id, fileType, connection, callback) => {
 /**
  * Update applicant with optional file uploads
  */
-exports.updateApplicant=(req,res) => {
-  upload(req,res,(err) => {
-    if(err) {
-      logger.error('Multer error:',err);
-      return badRequest(res,err.message||ERROR_MESSAGES.FILE_UPLOAD_FAILED);
+exports.updateApplicant = (req, res) => {
+  upload(req, res, (err) => {
+    if (err) {
+      logger.error('Multer error:', err);
+      return badRequest(res, err.message || ERROR_MESSAGES.FILE_UPLOAD_FAILED);
     }
 
-    const {applicant_id}=req.params;
+    const { applicant_id } = req.params;
     const {
       fina_ctm_key,
       lbd_ctm_key,
@@ -614,87 +671,87 @@ exports.updateApplicant=(req,res) => {
       issued_by,
       issued_date,
       expiry_date,
-    }=req.body;
+    } = req.body;
 
-    const data_entry_employee_id=req.user?.id;
+    const data_entry_employee_id = req.user?.id;
 
-    if(!data_entry_employee_id) {
-      return unauthorized(res,ERROR_MESSAGES.TOKEN_MISSING);
+    if (!data_entry_employee_id) {
+      return unauthorized(res, ERROR_MESSAGES.TOKEN_MISSING);
     }
 
-    const requiredFields=[
-      {field: name,name: 'name'},
-      {field: surname,name: 'surname'},
-      {field: dob,name: 'dob'},
-      {field: village,name: 'village'},
-      {field: gender,name: 'gender'},
-      {field: province_id,name: 'province_id'},
-      {field: district_id,name: 'district_id'},
-      {field: relationship_status,name: 'relationship_status'},
-      {field: doc_type,name: 'doc_type'},
-      {field: doc_number,name: 'doc_number'},
-      {field: issued_by,name: 'issued_by'},
-      {field: issued_date,name: 'issued_date'},
-      {field: expiry_date,name: 'expiry_date'},
-      {field: lbd_ctm_key,name: 'lbd_ctm_key'},
+    const requiredFields = [
+      { field: name, name: 'name' },
+      { field: surname, name: 'surname' },
+      { field: dob, name: 'dob' },
+      { field: village, name: 'village' },
+      { field: gender, name: 'gender' },
+      { field: province_id, name: 'province_id' },
+      { field: district_id, name: 'district_id' },
+      { field: relationship_status, name: 'relationship_status' },
+      { field: doc_type, name: 'doc_type' },
+      { field: doc_number, name: 'doc_number' },
+      { field: issued_by, name: 'issued_by' },
+      { field: issued_date, name: 'issued_date' },
+      { field: expiry_date, name: 'expiry_date' },
+      { field: lbd_ctm_key, name: 'lbd_ctm_key' },
     ];
 
-    const missingField=requiredFields.find(f => !f.field);
-    if(missingField) {
-      return badRequest(res,ERROR_MESSAGES.MISSING_FIELDS);
+    const missingField = requiredFields.find(f => !f.field);
+    if (missingField) {
+      return badRequest(res, ERROR_MESSAGES.MISSING_FIELDS);
     }
 
-    if(isNaN(Date.parse(dob))||isNaN(Date.parse(issued_date))||isNaN(Date.parse(expiry_date))) {
-      return badRequest(res,ERROR_MESSAGES.INVALID_DATE_FORMAT);
+    if (isNaN(Date.parse(dob)) || isNaN(Date.parse(issued_date)) || isNaN(Date.parse(expiry_date))) {
+      return badRequest(res, ERROR_MESSAGES.INVALID_DATE_FORMAT);
     }
 
-    if(!Object.values(RELATIONSHIP_STATUS).includes(relationship_status)) {
-      return badRequest(res,ERROR_MESSAGES.INVALID_RELATIONSHIP_STATUS);
+    if (!Object.values(RELATIONSHIP_STATUS).includes(relationship_status)) {
+      return badRequest(res, ERROR_MESSAGES.INVALID_RELATIONSHIP_STATUS);
     }
 
-    if(!Object.values(DOC_TYPES).includes(doc_type)) {
-      return badRequest(res,ERROR_MESSAGES.INVALID_DOC_TYPE);
+    if (!Object.values(DOC_TYPES).includes(doc_type)) {
+      return badRequest(res, ERROR_MESSAGES.INVALID_DOC_TYPE);
     }
 
-    if(!Object.values(GENDER).includes(gender)) {
-      return badRequest(res,ERROR_MESSAGES.INVALID_GENDER);
+    if (!Object.values(GENDER).includes(gender)) {
+      return badRequest(res, ERROR_MESSAGES.INVALID_GENDER);
     }
 
-    if(fina_ctm_key&&lbd_ctm_key&&fina_ctm_key===lbd_ctm_key) {
-      return conflict(res,ERROR_MESSAGES.KEYS_MUST_BE_DIFFERENT);
+    if (fina_ctm_key && lbd_ctm_key && fina_ctm_key === lbd_ctm_key) {
+      return conflict(res, ERROR_MESSAGES.KEYS_MUST_BE_DIFFERENT);
     }
 
-    db.getConnection((err,connection) => {
-      if(err) {
-        logger.error('Error getting connection:',err);
-        return serverError(res,ERROR_MESSAGES.DATABASE_CONNECTION_ERROR);
+    db.getConnection((err, connection) => {
+      if (err) {
+        logger.error('Error getting connection:', err);
+        return serverError(res, ERROR_MESSAGES.DATABASE_CONNECTION_ERROR);
       }
 
       connection.beginTransaction((txErr) => {
-        if(txErr) {
+        if (txErr) {
           connection.release();
-          logger.error('Error starting transaction:',txErr);
-          return serverError(res,ERROR_MESSAGES.TRANSACTION_ERROR);
+          logger.error('Error starting transaction:', txErr);
+          return serverError(res, ERROR_MESSAGES.TRANSACTION_ERROR);
         }
 
-        connection.query('SELECT * FROM applicants WHERE id = ?',[applicant_id],(checkErr,applicantResults) => {
-          if(checkErr) {
-            logger.error('Error checking applicant:',checkErr);
+        connection.query('SELECT * FROM applicants WHERE id = ?', [applicant_id], (checkErr, applicantResults) => {
+          if (checkErr) {
+            logger.error('Error checking applicant:', checkErr);
             return connection.rollback(() => {
               connection.release();
-              serverError(res,ERROR_MESSAGES.DATABASE_ERROR);
+              serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
             });
           }
-          if(applicantResults.length===0) {
+          if (applicantResults.length === 0) {
             return connection.rollback(() => {
               connection.release();
-              notFound(res,ERROR_MESSAGES.APPLICANT_NOT_FOUND);
+              notFound(res, ERROR_MESSAGES.APPLICANT_NOT_FOUND);
             });
           }
 
-          const currentData=applicantResults[0];
-          const updateFields={};
-          const fieldsToCheck=[
+          const currentData = applicantResults[0];
+          const updateFields = {};
+          const fieldsToCheck = [
             'fina_ctm_key',
             'lbd_ctm_key',
             'credit_rating',
@@ -714,124 +771,124 @@ exports.updateApplicant=(req,res) => {
           ];
 
           fieldsToCheck.forEach((field) => {
-            const newValue=req.body[field];
-            if(newValue!==undefined&&newValue!==null&&newValue!==currentData[field]) {
-              updateFields[field]=newValue;
+            const newValue = req.body[field];
+            if (newValue !== undefined && newValue !== null && newValue !== currentData[field]) {
+              updateFields[field] = newValue;
             }
           });
 
           // ✅ ບັງຄັບ update current_status ເປັນ in_progress ສະເໝີ
-          updateFields['current_status']=APPLICANT_STATUS.IN_PROGRESS;
+          updateFields['current_status'] = APPLICANT_STATUS.IN_PROGRESS;
 
           connection.query(
             'SELECT fina_ctm_key, lbd_ctm_key FROM applicants WHERE (fina_ctm_key = ? OR lbd_ctm_key = ?) AND id != ?',
-            [fina_ctm_key||null,lbd_ctm_key,applicant_id],
-            (keyErr,keyResults) => {
-              if(keyErr) {
-                logger.error('Error checking keys:',keyErr);
+            [fina_ctm_key || null, lbd_ctm_key, applicant_id],
+            (keyErr, keyResults) => {
+              if (keyErr) {
+                logger.error('Error checking keys:', keyErr);
                 return connection.rollback(() => {
                   connection.release();
-                  serverError(res,ERROR_MESSAGES.DATABASE_ERROR);
+                  serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
                 });
               }
-              if(keyResults.length>0) {
-                const existing=keyResults[0];
-                if(fina_ctm_key&&existing.fina_ctm_key===fina_ctm_key) {
+              if (keyResults.length > 0) {
+                const existing = keyResults[0];
+                if (fina_ctm_key && existing.fina_ctm_key === fina_ctm_key) {
                   return connection.rollback(() => {
                     connection.release();
-                    conflict(res,ERROR_MESSAGES.FINA_CTM_KEY_EXISTS);
+                    conflict(res, ERROR_MESSAGES.FINA_CTM_KEY_EXISTS);
                   });
                 }
-                if(existing.lbd_ctm_key===lbd_ctm_key) {
+                if (existing.lbd_ctm_key === lbd_ctm_key) {
                   return connection.rollback(() => {
                     connection.release();
-                    conflict(res,ERROR_MESSAGES.LBD_CTM_KEY_EXISTS);
+                    conflict(res, ERROR_MESSAGES.LBD_CTM_KEY_EXISTS);
                   });
                 }
               }
 
               connection.query(
                 'SELECT d.id FROM districts d JOIN provinces p ON d.province_id = p.id WHERE d.id = ? AND p.id = ?',
-                [district_id,province_id],
-                (locErr,locResults) => {
-                  if(locErr) {
-                    logger.error('Error checking location:',locErr);
+                [district_id, province_id],
+                (locErr, locResults) => {
+                  if (locErr) {
+                    logger.error('Error checking location:', locErr);
                     return connection.rollback(() => {
                       connection.release();
-                      serverError(res,ERROR_MESSAGES.DATABASE_ERROR);
+                      serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
                     });
                   }
-                  if(locResults.length===0) {
+                  if (locResults.length === 0) {
                     return connection.rollback(() => {
                       connection.release();
-                      badRequest(res,ERROR_MESSAGES.INVALID_PROVINCE_DISTRICT);
+                      badRequest(res, ERROR_MESSAGES.INVALID_PROVINCE_DISTRICT);
                     });
                   }
 
-                  const checkCertificateQuery=`
+                  const checkCertificateQuery = `
                     SELECT id FROM applicants
                     WHERE doc_type = ? AND doc_number = ? AND id != ?
                   `;
 
                   connection.query(
                     checkCertificateQuery,
-                    [doc_type,doc_number,applicant_id],
-                    (certErr,certResults) => {
-                      if(certErr) {
-                        logger.error('Error checking document:',certErr);
+                    [doc_type, doc_number, applicant_id],
+                    (certErr, certResults) => {
+                      if (certErr) {
+                        logger.error('Error checking document:', certErr);
                         return connection.rollback(() => {
                           connection.release();
-                          serverError(res,ERROR_MESSAGES.DATABASE_ERROR);
+                          serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
                         });
                       }
 
-                      if(certResults.length>0) {
+                      if (certResults.length > 0) {
                         return connection.rollback(() => {
                           connection.release();
-                          return conflict(res,'ເລກເອກະສານນີ້ມີຢູ່ແລ້ວ');
+                          return conflict(res, 'ເລກເອກະສານນີ້ມີຢູ່ແລ້ວ');
                         });
                       }
 
-                      const uploadedFiles=[];
-                      let updated=false;
+                      const uploadedFiles = [];
+                      let updated = false;
 
-                      const updateApplicantQuery=`
+                      const updateApplicantQuery = `
                         UPDATE applicants SET
                           ${Object.keys(updateFields).map(field => `${field} = ?`).join(', ')}
                         WHERE id = ?
                       `;
-                      const values=[...Object.values(updateFields),applicant_id];
+                      const values = [...Object.values(updateFields), applicant_id];
 
-                      const executeNextStep=() => {
-                        const fileTypes=Object.values(FILE_TYPES);
-                        const fileErrors=[];
-                        let filesProcessed=0;
-                        const filesToProcess=fileTypes.filter(ft => req.files[ft]).length;
+                      const executeNextStep = () => {
+                        const fileTypes = Object.values(FILE_TYPES);
+                        const fileErrors = [];
+                        let filesProcessed = 0;
+                        const filesToProcess = fileTypes.filter(ft => req.files[ft]).length;
 
-                        if(filesToProcess===0) {
+                        if (filesToProcess === 0) {
                           logger.debug('No files to upload, proceeding to audit log');
                           insertAuditLog();
                           return;
                         }
 
                         fileTypes.forEach((fileType) => {
-                          if(!req.files[fileType]) {
+                          if (!req.files[fileType]) {
                             filesProcessed++;
-                            if(filesProcessed===filesToProcess) {
+                            if (filesProcessed === filesToProcess) {
                               finalizeFileUpdate();
                             }
                             return;
                           }
 
-                          const file=req.files[fileType][0];
-                          const new_file_path=`applicant_documents/${fileType}/${file.filename}`;
+                          const file = req.files[fileType][0];
+                          const new_file_path = `applicant_documents/${fileType}/${file.filename}`;
                           logger.debug(`Uploading new file: ${new_file_path}`);
 
-                          deleteOldFile(applicant_id,fileType,connection,(delErr) => {
-                            if(delErr) {
+                          deleteOldFile(applicant_id, fileType, connection, (delErr) => {
+                            if (delErr) {
                               fileErrors.push(`Failed to delete old file for ${fileType}: ${delErr.message}`);
                               filesProcessed++;
-                              if(filesProcessed===filesToProcess) {
+                              if (filesProcessed === filesToProcess) {
                                 finalizeFileUpdate();
                               }
                               return;
@@ -839,17 +896,17 @@ exports.updateApplicant=(req,res) => {
 
                             connection.query(
                               'INSERT INTO applicant_documents (applicant_id, file_type, file_path) VALUES (?, ?, ?)',
-                              [applicant_id,fileType,new_file_path],
+                              [applicant_id, fileType, new_file_path],
                               (insertErr) => {
-                                if(insertErr) {
-                                  logger.error(`Error inserting new file ${fileType}:`,insertErr);
+                                if (insertErr) {
+                                  logger.error(`Error inserting new file ${fileType}:`, insertErr);
                                   fileErrors.push(`Failed to insert new file ${fileType}: ${insertErr.message}`);
                                 } else {
-                                  uploadedFiles.push({applicant_id,file_type: fileType,file_path: new_file_path});
-                                  updated=true;
+                                  uploadedFiles.push({ applicant_id, file_type: fileType, file_path: new_file_path });
+                                  updated = true;
                                 }
                                 filesProcessed++;
-                                if(filesProcessed===filesToProcess) {
+                                if (filesProcessed === filesToProcess) {
                                   finalizeFileUpdate();
                                 }
                               }
@@ -858,11 +915,11 @@ exports.updateApplicant=(req,res) => {
                         });
 
                         function finalizeFileUpdate() {
-                          if(fileErrors.length>0) {
-                            logger.error('File update errors:',fileErrors);
+                          if (fileErrors.length > 0) {
+                            logger.error('File update errors:', fileErrors);
                             return connection.rollback(() => {
                               connection.release();
-                              serverError(res,ERROR_MESSAGES.DATABASE_ERROR,{errors: fileErrors});
+                              serverError(res, ERROR_MESSAGES.DATABASE_ERROR, { errors: fileErrors });
                             });
                           }
                           insertAuditLog();
@@ -872,40 +929,40 @@ exports.updateApplicant=(req,res) => {
                       function insertAuditLog() {
                         connection.query(
                           'INSERT INTO audit_logs (applicant_id, data_entry_employee_id, action, status, timestamp) VALUES (?, ?, ?, ?, NOW())',
-                          [applicant_id,data_entry_employee_id,AUDIT_ACTIONS.EDIT_DOCUMENTS,APPLICANT_STATUS.IN_PROGRESS],
+                          [applicant_id, data_entry_employee_id, AUDIT_ACTIONS.EDIT_DOCUMENTS, APPLICANT_STATUS.IN_PROGRESS],
                           (auditErr) => {
-                            if(auditErr) {
-                              logger.error('Error inserting audit log:',auditErr);
+                            if (auditErr) {
+                              logger.error('Error inserting audit log:', auditErr);
                               return connection.rollback(() => {
                                 connection.release();
-                                serverError(res,ERROR_MESSAGES.DATABASE_ERROR);
+                                serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
                               });
                             }
 
                             connection.commit((commitErr) => {
-                              if(commitErr) {
-                                logger.error('Error committing transaction:',commitErr);
+                              if (commitErr) {
+                                logger.error('Error committing transaction:', commitErr);
                                 return connection.rollback(() => {
                                   connection.release();
-                                  serverError(res,ERROR_MESSAGES.TRANSACTION_ERROR);
+                                  serverError(res, ERROR_MESSAGES.TRANSACTION_ERROR);
                                 });
                               }
                               connection.release();
-                              return success(res,SUCCESS_MESSAGES.APPLICANT_UPDATED,{documents: uploadedFiles});
+                              return success(res, SUCCESS_MESSAGES.APPLICANT_UPDATED, { documents: uploadedFiles });
                             });
                           }
                         );
                       }
 
-                      connection.query(updateApplicantQuery,values,(updateErr) => {
-                        if(updateErr) {
-                          logger.error('Error updating applicant:',updateErr);
+                      connection.query(updateApplicantQuery, values, (updateErr) => {
+                        if (updateErr) {
+                          logger.error('Error updating applicant:', updateErr);
                           return connection.rollback(() => {
                             connection.release();
-                            serverError(res,ERROR_MESSAGES.DATABASE_ERROR);
+                            serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
                           });
                         }
-                        updated=true;
+                        updated = true;
                         executeNextStep();
                       });
                     }

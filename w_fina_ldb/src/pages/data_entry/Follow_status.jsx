@@ -25,9 +25,8 @@ const FollowStatus = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState('all');
   const [applicantIdSearch, setApplicantIdSearch] = useState('');
-  const [dateFrom, setDateFrom] = useState(null);
-  const [dateTo, setDateTo] = useState(null);
-  // ເພີ່ມ state
+  // ✅ ເຫຼືອ state ວັນທີ່ດຽວ ແທນ dateFrom / dateTo
+  const [selectedDate, setSelectedDate] = useState(null);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -66,8 +65,12 @@ const FollowStatus = () => {
       const params = { page, limit: 10 };
       if (statusFilter !== 'all') params.status = statusFilter;
       if (applicantIdSearch) params.applicant_id = applicantIdSearch;
-      if (dateFrom) params.date_from = format(dateFrom, 'yyyy-MM-dd');
-      if (dateTo) params.date_to = format(dateTo, 'yyyy-MM-dd');
+      // ✅ ສົ່ງ date_from ແລະ date_to ເປັນວັນດຽວກັນ ເພື່ອຄົ້ນຫາສະເພາະວັນນັ້ນ
+      if (selectedDate) {
+        const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+        params.date_from = formattedDate;
+        params.date_to = formattedDate;
+      }
 
       console.log('Fetching reports with params:', params);
       const response = await axios.get(`${API_BASE_URL}/api/data_entry_report`, {
@@ -80,12 +83,10 @@ const FollowStatus = () => {
 
       console.log('API Response:', response.data);
 
-      // ✅ ໃຊ້ pagination object
       const { totalPages: tp } = response.data.pagination;
 
       const filteredReports = response.data.data || [];
 
-      // ✅ sort ໃໝ່ສຸດຢູ່ເທີງ
       const sortedReports = filteredReports.sort((a, b) => {
         return new Date(b.updated_at) - new Date(a.updated_at);
       });
@@ -99,7 +100,7 @@ const FollowStatus = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, applicantIdSearch, dateFrom, dateTo]);
+  }, [page, statusFilter, applicantIdSearch, selectedDate]);
 
   useEffect(() => {
     fetchReports();
@@ -133,20 +134,14 @@ const FollowStatus = () => {
 
   const handleRefresh = () => {
     setApplicantIdSearch('');
-    setDateFrom(null);
-    setDateTo(null);
+    setSelectedDate(null);
     setStatusFilter('all');
     setPage(1);
     fetchReports();
   };
 
-  const clearDateFrom = () => {
-    setDateFrom(null);
-    setPage(1);
-  };
-
-  const clearDateTo = () => {
-    setDateTo(null);
+  const clearDate = () => {
+    setSelectedDate(null);
     setPage(1);
   };
 
@@ -196,8 +191,6 @@ const FollowStatus = () => {
     return gender === 'male' ? 'ຊາຍ' : gender === 'female' ? 'ຍິງ' : '-';
   };
 
-
-
   const showRejectionFeedback = (report) => {
     Swal.fire({
       title: 'ເຫດຜົນທີ່ປະຕິເສດ',
@@ -219,20 +212,6 @@ const FollowStatus = () => {
         applicant={selectedApplicant}
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setSelectedApplicant(null); }}
-      // extraActions={
-      //   isVerifier ? (
-      //     <button
-      //       onClick={() => {
-      //         setIsModalOpen(false);
-      //         handleStatusUpdate(selectedApplicant.applicant_id, 'issued');
-      //       }}
-      //       className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold"
-      //     >
-      //       ອອກບັດ
-      //     </button>
-      //   ) : null
-      // }
-
       />
       <Card className="shadow-2xl rounded-2xl border-2 border-blue-500">
         <CardHeader>
@@ -251,41 +230,22 @@ const FollowStatus = () => {
                 onChange={handleApplicantIdSearch}
                 className="w-full sm:w-48 h-10 border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao"
               />
+              {/* ✅ ຊ່ອງວັນທີ່ດຽວ ແທນ 2 ຊ່ອງ (ວັນທີ່ຈາກ / ວັນທີ່ຫາ) */}
               <div className="relative flex items-center">
                 <DatePicker
-                  selected={dateFrom}
-                  onChange={(date) => setDateFrom(date)}
+                  selected={selectedDate}
+                  onChange={(date) => setSelectedDate(date)}
                   dateFormat="dd/MM/yyyy"
-                  placeholderText="ວັນທີ່ສ້າງຈາກ (dd/mm/yyyy)"
+                  placeholderText="ຄົ້ນຫາຕາມວັນທີ່ (dd/mm/yyyy)"
                   className="w-full sm:w-48 h-10 border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao"
                 />
-                {dateFrom && (
+                {selectedDate && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={clearDateFrom}
+                    onClick={clearDate}
                     className="absolute right-2 h-6 w-6 text-gray-500 hover:text-red-500"
-                    aria-label="ລ້າງວັນທີ່ສ້າງຈາກ"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <div className="relative flex items-center">
-                <DatePicker
-                  selected={dateTo}
-                  onChange={(date) => setDateTo(date)}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="ວັນທີ່ສ້າງຫາ (dd/mm/yyyy)"
-                  className="w-full sm:w-48 h-10 border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao"
-                />
-                {dateTo && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={clearDateTo}
-                    className="absolute right-2 h-6 w-6 text-gray-500 hover:text-red-500"
-                    aria-label="ລ້າງວັນທີ່ສ້າງຫາ"
+                    aria-label="ລ້າງວັນທີ່"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -383,7 +343,6 @@ const FollowStatus = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          // ✅ ໃໝ່
                           onClick={() => { setSelectedApplicant(report); setIsModalOpen(true); }}
                           className="border-blue-500 text-blue-500 hover:bg-blue-100"
                           aria-label={`ເບິ່ງລາຍລະອຽດຜູ້ສະໝັກ ${report.applicant_id}`}

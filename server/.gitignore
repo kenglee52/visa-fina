@@ -5,12 +5,12 @@ node_modules/
 .env
 .env.local
 
-# Uploads / images
-product_image/
+# # Uploads / images
+# product_image/
 
-# Logs
-*.log
-*.pdf
+# # Logs
+# *.log
+# *.pdf
 
-# OS
-.DS_Storeconfig/applicant_documents/ 
+# # OS
+# .DS_Storeconfig/applicant_documents/ 

@@ -147,12 +147,15 @@ const EditApplicant = () => {
     request_earmark_account: null,
     registration_form_credit_card: null,
     registration_form_gif_fina: null,
+    file_typ_5: null, // ✅ ເພີ່ມ
+
   });
   const [documents, setDocuments] = useState({
     customer_request_form: null,
     request_earmark_account: null,
     registration_form_credit_card: null,
     registration_form_gif_fina: null,
+    file_typ_5: null, // ✅ ເພີ່ມ
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -199,6 +202,7 @@ const EditApplicant = () => {
           request_earmark_account: null,
           registration_form_credit_card: null,
           registration_form_gif_fina: null,
+          file_typ_5: null, // ✅ ເພີ່ມ
         });
 
         // Fetch provinces
@@ -269,6 +273,7 @@ const EditApplicant = () => {
     request_earmark_account: false,
     registration_form_credit_card: false,
     registration_form_gif_fina: false,
+    file_typ_5: false, // ✅ ເພີ່ມ
   });
   const handleFileChange = (e, fileType) => {
     const file = e.target.files[0];
@@ -413,6 +418,7 @@ const EditApplicant = () => {
       { key: 'registration_form_gif_fina', label: 'ແບບຟອມລົງທະບຽນ GIF FINA' },
       { key: 'customer_request_form', label: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ' },        // ✅ ເພີ່ມ
       { key: 'request_earmark_account', label: 'ໃບສະເໜີຂໍ Block ບັນຊີ' },
+      { key: 'file_typ_5', label: 'ຊື່ໄຟລ໌ 5' }, // ✅ ເພີ່ມ
     ];
 
     for (const { key, label } of requiredFileTypes) {
@@ -454,7 +460,7 @@ const EditApplicant = () => {
     Object.entries(formData).forEach(([key, value]) => {
       if (value) data.append(key, value);
     });
-    const validFileTypes = ['customer_request_form', 'request_earmark_account', 'registration_form_credit_card', 'registration_form_gif_fina'];
+    const validFileTypes = ['customer_request_form', 'request_earmark_account', 'registration_form_credit_card', 'registration_form_gif_fina', 'file_typ_5',];
     Object.entries(files).forEach(([key, file]) => {
       if (file && validFileTypes.includes(key)) {
         data.append(key, file);
@@ -474,6 +480,7 @@ const EditApplicant = () => {
         request_earmark_account: null,
         registration_form_credit_card: null,
         registration_form_gif_fina: null,
+        file_typ_5: null, // ✅ ເພີ່ມ
       });
       const updatedResponse = await axios.get(`${API_BASE_URL}/api/applicant/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -483,6 +490,7 @@ const EditApplicant = () => {
         request_earmark_account: null,
         registration_form_credit_card: null,
         registration_form_gif_fina: null,
+        file_typ_5: null, // ✅ ເພີ່ມ
       });
       // setDialogTitle('ສຳເລັດ');
       // setDialogMessage(response.data.message || 'ຂໍ້ມູນຖືກແກ້ໄຂສຳເລັດ');
@@ -947,6 +955,46 @@ const EditApplicant = () => {
                 )}
                 {error.includes('ແບບຟອມລົງທະບຽນ GIF FINA') && (
                   <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມລົງທະບຽນ GIF FINA</span>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  ຊື່ໄຟລ໌ 5 (PDF, ບັງຄັບ) <span className="text-red-600">*</span>
+                </label>
+                <Input
+                  type="file"
+                  accept=".pdf"
+                  name="file_typ_5"
+                  onChange={(e) => handleFileChange(e, 'file_typ_5')}
+                  required
+                  className={`mt-1 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors ${getFieldError('ຊື່ໄຟລ໌ 5')}`}
+                />
+                {documents.file_typ_5 && (
+                  <div className="flex items-center space-x-2 mt-1">
+                    <a  
+                      href={`${API_BASE_URL}/${documents.file_typ_5}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-sm truncate"
+                    >
+                      {documents.file_typ_5.split('/').pop()}
+                    </a>
+                    <button
+                      onClick={() => handleDeleteFile('file_typ_5')}
+                      className="text-red-600 hover:text-red-800 text-sm rounded-full"
+                      title="ລົບໄຟລ໌"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+                {files.file_typ_5 && (
+                  <p className="text-sm text-gray-600 mt-1 truncate">
+                    ເລືອກແລ້ວ: {files.file_typ_5.name}
+                  </p>
+                )}
+                {error.includes('ຊື່ໄຟລ໌ 5') && (
+                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດຊື່ໄຟລ໌ 5</span>
                 )}
               </div>
             </div>
