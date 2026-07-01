@@ -4,7 +4,7 @@
  */
 
 // API Base URL - supports environment variables
-export const API_BASE_URL = 'http://localhost:8001';
+export const API_BASE_URL = 'http://10.0.200.107:8002';
 
 // API Timeout
 export const API_TIMEOUT = 30000;
