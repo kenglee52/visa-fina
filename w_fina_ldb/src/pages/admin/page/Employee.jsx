@@ -177,10 +177,10 @@ const Employee = () => {
     setFilteredEmployees(
       employees.filter(
         (emp) =>
-          emp.id.toString().includes(searchTerm.toLowerCase()) ||
-          emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          emp.email.toLowerCase().includes(searchTerm.toLowerCase()),
+          emp.id?.toString().includes(searchTerm.toLowerCase()) ||
+          emp.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          emp.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          emp.email?.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
     );
   }, [searchTerm, employees]);

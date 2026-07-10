@@ -122,8 +122,8 @@ const ApplicantDetailModal = ({ applicant, isOpen, onClose, isVerifier, onStatus
                 { label: 'ອອກໂດຍ', value: applicant.issued_by || '-' },
                 { label: 'ວັນທີ່ອອກ', value: formatDate(applicant.issued_date) },
                 { label: 'ໝົດອາຍຸ', value: formatDate(applicant.expiry_date) },
-                { label: 'Fina CTM Key', value: applicant.fina_ctm_key || '-' },
-                { label: 'LBD CTM Key', value: applicant.lbd_ctm_key || '-' },
+                { label: 'FINA Customer ID', value: applicant.fina_ctm_key || '-' },
+                { label: 'LBB Customer ID', value: applicant.lbd_ctm_key || '-' },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-400 mb-0.5">{label}</p>
@@ -212,6 +212,7 @@ const ApplicantDetailModal = ({ applicant, isOpen, onClose, isVerifier, onStatus
     </div>
   );
 };
+
 
 // ========== Main Component ==========
 const Verifier_confirm = () => {
@@ -410,7 +411,7 @@ const Verifier_confirm = () => {
     formatStatus: (s) => ({ in_progress: 'ລໍຖ້າການຕິດຕາມ', rejected: 'ປະຕິເສດ', checked: 'ກວດສອບແລ້ວ' }[s] || '-'),
     formatGender: (g) => g === 'male' ? 'ຊາຍ' : g === 'female' ? 'ຍິງ' : '-',
     formatDocType: (d) => ({ passport: 'ໜັງສືຜ່ານແດນ', id_card: 'ບັດປະຈຳຕົວ', family_book: 'ສຳມະໂນຄົວ', other: 'ອື່ນໆ' }[d] || '-'),
-    formatFileType: (f) => ({ customer_request_form: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ', request_earmark_account: 'ໃບສະເໜີຂໍ Block ບັນຊີ', registration_form_credit_card: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ' }[f] || f || '-'),
+    formatFileType: (f) => ({ customer_request_form: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ', request_earmark_account: 'ໃບສະເໜີຂໍ Block ບັນຊີ', registration_form_credit_card: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ', registration_form_gif_fina: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ', file_typ_5: 'ຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ', }[f] || f || '-'),
     formatRelationshipStatus: (s) => ({ single: 'ໂສດ', married: 'ແຕ່ງງານແລ້ວ', divorced: 'ຢ່າຮ້າງ', widowed: 'ໝ້າຍ/ໝ້າຍຜົວ' }[s] || s || '-'),
   };
 

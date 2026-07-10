@@ -30,7 +30,7 @@ export const DOCUMENT_TYPES = [
 export const FILE_TYPES = {
   CUSTOMER_REQUEST_FORM: {
     value: 'customer_request_form',
-    label: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ'
+    label: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ'
   },
   REQUEST_EARMARK_ACCOUNT: {
     value: 'request_earmark_account',
@@ -38,16 +38,16 @@ export const FILE_TYPES = {
   },
   REGISTRATION_FORM_CREDIT_CARD: {
     value: 'registration_form_credit_card',
-    label: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ'
+    label: 'ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ'
   },
   REGISTRATION_FORM_GIF_FINA: {
     value: 'registration_form_gif_fina',
-    label: 'ແບບຟອມລົງທະບຽນ GIF FINA'
+    label: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ'
   },
   // ✅ ເພີ່ມໃໝ່
   FILE_TYP_5: {
     value: 'file_typ_5',
-    label: 'ຊື່ໄຟລ໌ 5'
+    label: 'ຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ'
   },
 };
 // Relationship Statuses

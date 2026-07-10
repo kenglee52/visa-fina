@@ -393,7 +393,7 @@ const EditApplicant = () => {
     }
 
     if (isNaN(Date.parse(formData.dob)) || isNaN(Date.parse(formData.issued_date)) || isNaN(Date.parse(formData.expiry_date))) {
-      return 'ຮສູບແບບວັນທີ່ບໍ່ຖືກຕ້ອງ (ວັນເດືອນປີເກີດ, ວັນທີ່ອອກ, ຫຼືວັນທີ່ໝົດອາຍຸ)';
+      return 'ຮູບແບບວັນທີ່ບໍ່ຖືກຕ້ອງ (ວັນເດືອນປີເກີດ, ວັນທີ່ອອກ, ຫຼືວັນທີ່ໝົດອາຍຸ)';
     }
 
     if (!['single', 'married', 'divorced', 'widowed'].includes(formData.relationship_status)) {
@@ -409,16 +409,16 @@ const EditApplicant = () => {
     }
 
     if (formData.fina_ctm_key && formData.lbd_ctm_key && formData.fina_ctm_key === formData.lbd_ctm_key) {
-      return 'FINA CTM ID ແລະ LBB CTM ID ຕ້ອງບໍ່ຊ້ຳກັນ';
+      return 'FINA Customer ID ແລະ LBB Customer ID ຕ້ອງບໍ່ຊ້ຳກັນ';
     }
 
     // ✅ ແທນ 2 if ສຸດທ້າຍເກົ່າດ້ວຍໂຕນີ້
     const requiredFileTypes = [
-      { key: 'registration_form_credit_card', label: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ' },
-      { key: 'registration_form_gif_fina', label: 'ແບບຟອມລົງທະບຽນ GIF FINA' },
-      { key: 'customer_request_form', label: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ' },        // ✅ ເພີ່ມ
+      { key: 'registration_form_credit_card', label: 'ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ' },
+      { key: 'registration_form_gif_fina', label: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ' },
+      { key: 'customer_request_form', label: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ' },        // ✅ ເພີ່ມ
       { key: 'request_earmark_account', label: 'ໃບສະເໜີຂໍ Block ບັນຊີ' },
-      { key: 'file_typ_5', label: 'ຊື່ໄຟລ໌ 5' }, // ✅ ເພີ່ມ
+      { key: 'file_typ_5', label: 'ຄໍາແນະ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ' }, // ✅ ເພີ່ມ
     ];
 
     for (const { key, label } of requiredFileTypes) {
@@ -564,25 +564,28 @@ const EditApplicant = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">FINA CTM ID</label>
+                <label className="block text-sm font-medium text-gray-700">FINA Customer ID</label>
                 <Input
                   name="fina_ctm_key"
                   value={formData.fina_ctm_key}
                   onChange={handleInputChange}
-                  className={`mt-1 h-10 transition-colors ${getFieldError('FINA CTM ID')}`}
+                  className={`mt-1 h-10 transition-colors ${getFieldError('FINA Customer ID')}`}
                 />
+                {error.includes('FINA Customer ID') && (
+                  <span className="text-red-500 text-sm">ກະລຸນາປ້ອນ FINA Customer ID</span>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">LBD CTM ID <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">LBB Customer ID <span className="text-red-600">*</span></label>
                 <Input
                   name="lbd_ctm_key"
                   value={formData.lbd_ctm_key}
                   onChange={handleInputChange}
                   required
-                  className={`mt-1 h-10 transition-colors ${getFieldError('LBD CTM ID')}`}
+                  className={`mt-1 h-10 transition-colors ${getFieldError('LBB Customer ID')}`}
                 />
-                {error.includes('LBD CTM ID') && (
-                  <span className="text-red-500 text-sm">ກະລຸນາປ້ອນ LBD CTM ID</span>
+                {error.includes('LBB Customer ID') && (
+                  <span className="text-red-500 text-sm">ກະລຸນາປ້ອນ LBB Customer ID</span>
                 )}
               </div>
               <div>
@@ -816,7 +819,7 @@ const EditApplicant = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">ແບບຟອມຄຳຂໍຂອງລູກຄ້າ (PDF, ບັງຄັບ)<span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ (PDF, ບັງຄັບ)<span className="text-red-600">*</span></label>
                 <Input
                   type="file"
                   accept=".pdf"
@@ -847,7 +850,7 @@ const EditApplicant = () => {
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.customer_request_form.name}</p>
                 )}
                 {error.includes('ແບບຟອມຄຳຂໍຂອງລູກຄ້າ') && (
-                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມຄຳຂໍຂອງລູກຄ້າ</span>
+                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ</span>
                 )}
               </div>
               <div>
@@ -886,7 +889,7 @@ const EditApplicant = () => {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">ແບບຟອມລົງທະບຽນບັດເຄຣດິດ (PDF, ບັງຄັບ) <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ (PDF, ບັງຄັບ) <span className="text-red-600">*</span></label>
                 <Input
                   type="file"
                   accept=".pdf"
@@ -918,11 +921,11 @@ const EditApplicant = () => {
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.registration_form_credit_card.name}</p>
                 )}
                 {error.includes('ແບບຟອມລົງທະບຽນບັດເຄຣດິດ') && (
-                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມລົງທະບຽນບັດເຄຣດິດ</span>
+                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ</span>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">ແບບຟອມລົງທະບຽນ GIF FINA (PDF, ບັງຄັບ) <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ (PDF, ບັງຄັບ) <span className="text-red-600">*</span></label>
                 <Input
                   type="file"
                   accept=".pdf"
@@ -954,12 +957,12 @@ const EditApplicant = () => {
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.registration_form_gif_fina.name}</p>
                 )}
                 {error.includes('ແບບຟອມລົງທະບຽນ GIF FINA') && (
-                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມລົງທະບຽນ GIF FINA</span>
+                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ</span>
                 )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  ຊື່ໄຟລ໌ 5 (PDF, ບັງຄັບ) <span className="text-red-600">*</span>
+                  ຄໍາແນະ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ (PDF, ບັງຄັບ) <span className="text-red-600">*</span>
                 </label>
                 <Input
                   type="file"
@@ -994,7 +997,7 @@ const EditApplicant = () => {
                   </p>
                 )}
                 {error.includes('ຊື່ໄຟລ໌ 5') && (
-                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດຊື່ໄຟລ໌ 5</span>
+                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດຄໍາແນະ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ</span>
                 )}
               </div>
             </div>

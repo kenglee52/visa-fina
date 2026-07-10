@@ -21,10 +21,11 @@ const formatDocType = (d) => ({
 }[d] || '-');
 
 const formatFileType = (f) => ({
-  customer_request_form: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ',
+  customer_request_form: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ',
   request_earmark_account: 'ໃບສະເໜີຂໍ Block ບັນຊີ',
-  registration_form_credit_card: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ VISA',
-  registration_form_gif_fina: 'ແບບຟອມລົງທະບຽນ GIF Fina',
+  registration_form_credit_card: 'ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ',
+  registration_form_gif_fina: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ',
+  file_typ_5: 'ຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ',
 }[f] || f || '-');
 
 const formatRelationshipStatus = (s) => ({
@@ -155,8 +156,8 @@ const ApplicantDetailModal = ({ applicant, isOpen, onClose, extraActions }) => {
                 { label: 'ອອກໂດຍ', value: applicant.issued_by || '-' },
                 { label: 'ວັນທີ່ອອກ', value: formatDate(applicant.issued_date) },
                 { label: 'ໝົດອາຍຸ', value: formatDate(applicant.expiry_date) },
-                { label: 'Fina CTM Key', value: applicant.fina_ctm_key || '-' },
-                { label: 'LBD CTM Key', value: applicant.lbd_ctm_key || '-' },
+                { label: 'FINA Customer ID', value: applicant.fina_ctm_key || '-' },
+                { label: 'LBB Customer ID', value: applicant.lbd_ctm_key || '-' },
               ].map(({ label, value }) => (
                 <div key={label} className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-400 mb-0.5">{label}</p>

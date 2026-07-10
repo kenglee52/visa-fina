@@ -156,10 +156,11 @@ const FollowStatus = () => {
 
   const formatFileType = (fileType) => {
     switch (fileType) {
-      case 'customer_request_form': return 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ';
+      case 'customer_request_form': return 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ';
       case 'request_earmark_account': return 'ໃບສະເໜີຂໍ Block ບັນຊີ';
-      case 'registration_form_credit_card': return 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ VISA';
-      case 'registration_form_gif_fina': return 'ແບບຟອມລົງທະບຽນ GIF Fina';
+      case 'registration_form_credit_card': return 'ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ';
+      case 'registration_form_gif_fina': return 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ';
+      case 'file_typ_5': return 'ຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ';
 
 
       default: return fileType || '-';
