@@ -60,6 +60,7 @@ const INITIAL_FORM_STATE = {
 };
 
 // Validation rules
+// ✅ ລຶບ required ອອກ: relationship_status, doc_number, issued_by, issued_date, expiry_date
 const VALIDATION_RULES = {
   lbd_ctm_key: { required: VALIDATION_MESSAGES.REQUIRED },
   name: { required: VALIDATION_MESSAGES.REQUIRED },
@@ -69,12 +70,7 @@ const VALIDATION_RULES = {
   gender: { required: VALIDATION_MESSAGES.REQUIRED },
   province_id: { required: VALIDATION_MESSAGES.PROVINCE_REQUIRED },
   district_id: { required: VALIDATION_MESSAGES.DISTRICT_REQUIRED },
-  relationship_status: { required: VALIDATION_MESSAGES.REQUIRED },
   doc_type: { required: VALIDATION_MESSAGES.REQUIRED },
-  doc_number: { required: VALIDATION_MESSAGES.REQUIRED },
-  issued_by: { required: VALIDATION_MESSAGES.REQUIRED },
-  issued_date: { required: VALIDATION_MESSAGES.REQUIRED },
-  expiry_date: { required: VALIDATION_MESSAGES.REQUIRED },
 };
 
 const DataEntry = () => {
@@ -186,7 +182,7 @@ const DataEntry = () => {
       return false;
     }
 
-    // Validate date formats
+    // Validate date formats (only when value provided — issued_date/expiry_date are optional now)
     const dateFields = ['dob', 'issued_date', 'expiry_date'];
     for (const field of dateFields) {
       if (form[field] && isNaN(Date.parse(form[field]))) {
@@ -195,7 +191,7 @@ const DataEntry = () => {
       }
     }
 
-    // Validate enum values
+    // Validate enum values (only when value provided — relationship_status is optional now)
     if (form.relationship_status && !RELATIONSHIP_STATUSES.some(s => s.value === form.relationship_status)) {
       showError('ກະລຸນາເລືອກສະຖານະຄວາມສຳພັນໃຫ້ຖືກຕ້ອງ');
       return false;
@@ -216,26 +212,25 @@ const DataEntry = () => {
 
   /**
    * Validate required file uploads
+   * ✅ ເຫຼືອບັງຄັບພຽງ 2 ໄຟລ໌: registration_form_credit_card, customer_request_form
+   * ✅ ບໍ່ບັງຄັບອີກຕໍ່ໄປ: request_earmark_account, registration_form_gif_fina, file_typ_5
    */
   const validateRequiredFiles = () => {
     const requiredFiles = [
-      FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD.value,  // ✅
-      FILE_TYPES.REGISTRATION_FORM_GIF_FINA.value,     // ✅
+      FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD.value,
       FILE_TYPES.CUSTOMER_REQUEST_FORM.value,
-      FILE_TYPES.REQUEST_EARMARK_ACCOUNT.value,
-      FILE_TYPES.FILE_TYP_5.value, // ✅ ເພີ່ມໃໝ່
     ];
 
     const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
     for (const fileType of requiredFiles) {
-      const fileData = files[fileType];  // ✅ fileType ຕອນນີ້ເປັນ string
+      const fileData = files[fileType];
 
       if (!fileData) {
         Swal.fire({
           icon: 'warning',
           title: 'ກະລຸນາອັບໂຫຼດຟາຍ!',
-          text: `ທ່ານຍັງບໍ່ໄດ້ອັບໂຫຼດ: ${fileType} (ບັງຄັບ)`,  // ✅
+          text: `ທ່ານຍັງບໍ່ໄດ້ອັບໂຫຼດ: ${fileType} (ບັງຄັບ)`,
           confirmButtonText: 'ຕົກລົງ',
           confirmButtonColor: '#3085d6',
         });
@@ -246,7 +241,7 @@ const DataEntry = () => {
         Swal.fire({
           icon: 'error',
           title: 'ຟາຍມີຂະໜາດໃຫຍ່ເກີນໄປ!',
-          html: `ຟາຍ <b>"${fileType}"</b> ມີຂະໜາດເກີນ 5 MB.`,  // ✅
+          html: `ຟາຍ <b>"${fileType}"</b> ມີຂະໜາດເກີນ 5 MB.`,
           confirmButtonText: 'ຕົກລົງ',
           confirmButtonColor: '#d33',
         });
@@ -273,7 +268,7 @@ const DataEntry = () => {
       return;
     }
 
-    // ✅ ເພີ່ມ: ກວດ fileErrors ຈາກ useFileUpload hook
+    // ✅ ກວດ fileErrors ຈາກ useFileUpload hook
     const hasFileErrors = Object.values(fileErrors).some(err => err);
     if (hasFileErrors) {
       const firstError = Object.values(fileErrors).find(err => err);
@@ -340,17 +335,7 @@ const DataEntry = () => {
     handleDirectChange('gender', value);
   };
 
-  /**
-   * Handle file input change
-   */
-  // const handleFileInputChange = (fileType) => (e) => {
-  //   const file = e.target.files[0];
-  //   if (file) {
-  //     handleFileChange(fileType, file);
-  //   }
-  // };
-
-  // ✅ Fix 1: handleFileInputChange — ກວດ size ທັນທີ ກ່ອນຈະ set file
+  // ✅ handleFileInputChange — ກວດ size ທັນທີ ກ່ອນຈະ set file
   const handleFileInputChange = (fileType) => (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -643,10 +628,10 @@ const DataEntry = () => {
                 )}
               </div>
 
-              {/* Relationship Status */}
+              {/* Relationship Status — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div className="space-y-2">
                 <Label htmlFor="relationship_status" className="text-gray-700 font-semibold">
-                  {INPUT_LABELS.RELATIONSHIP_STATUS} <span className="text-red-600">*</span>
+                  {INPUT_LABELS.RELATIONSHIP_STATUS}
                 </Label>
                 <Select
                   value={form.relationship_status}
@@ -695,10 +680,10 @@ const DataEntry = () => {
                 )}
               </div>
 
-              {/* Document Number */}
+              {/* Document Number — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div className="space-y-2">
                 <Label htmlFor="doc_number" className="text-gray-700 font-semibold">
-                  {INPUT_LABELS.DOC_NUMBER} <span className="text-red-600">*</span>
+                  {INPUT_LABELS.DOC_NUMBER}
                 </Label>
                 <Input
                   id="doc_number"
@@ -706,7 +691,6 @@ const DataEntry = () => {
                   value={form.doc_number}
                   onChange={handleChange}
                   placeholder={INPUT_LABELS.DOC_NUMBER}
-                  required
                   disabled={isSubmitting}
                   className={`h-10 transition-colors ${getFieldErrorClass('doc_number')}`}
                 />
@@ -715,10 +699,10 @@ const DataEntry = () => {
                 )}
               </div>
 
-              {/* Issued By */}
+              {/* Issued By — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div className="space-y-2">
                 <Label htmlFor="issued_by" className="text-gray-700 font-semibold">
-                  {INPUT_LABELS.ISSUED_BY} <span className="text-red-600">*</span>
+                  {INPUT_LABELS.ISSUED_BY}
                 </Label>
                 <Input
                   id="issued_by"
@@ -726,7 +710,6 @@ const DataEntry = () => {
                   value={form.issued_by}
                   onChange={handleChange}
                   placeholder={INPUT_LABELS.ISSUED_BY}
-                  required
                   disabled={isSubmitting}
                   className={`h-10 transition-colors ${getFieldErrorClass('issued_by')}`}
                 />
@@ -735,17 +718,16 @@ const DataEntry = () => {
                 )}
               </div>
 
-              {/* Document Dates */}
+              {/* Document Dates — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div className="space-y-2">
                 <Label htmlFor="issued_date" className="text-gray-700 font-semibold">
-                  {INPUT_LABELS.ISSUED_DATE} <span className="text-red-600">*</span>
+                  {INPUT_LABELS.ISSUED_DATE}
                 </Label>
                 <DateInput
                   id="issued_date"
                   name="issued_date"
                   value={form.issued_date}
                   onChange={handleChange}
-                  required
                   disabled={isSubmitting}
                   className="h-10"
                   placeholder="dd/mm/yyyy"
@@ -757,14 +739,13 @@ const DataEntry = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="expiry_date" className="text-gray-700 font-semibold">
-                  {INPUT_LABELS.EXPIRY_DATE} <span className="text-red-600">*</span>
+                  {INPUT_LABELS.EXPIRY_DATE}
                 </Label>
                 <DateInput
                   id="expiry_date"
                   name="expiry_date"
                   value={form.expiry_date}
                   onChange={handleChange}
-                  required
                   disabled={isSubmitting}
                   className="h-10"
                   placeholder="yyyy/mm/dd"
@@ -774,14 +755,11 @@ const DataEntry = () => {
                 )}
               </div>
 
-              {/* File Uploads */}
+              {/* File Uploads — ✅ ເຫຼືອບັງຄັບພຽງ 2 ໄຟລ໌ */}
               {Object.values(FILE_TYPES).map((fileType) => {
                 const isRequired = [
                   FILE_TYPES.REGISTRATION_FORM_CREDIT_CARD.value,
-                  FILE_TYPES.REGISTRATION_FORM_GIF_FINA.value,
                   FILE_TYPES.CUSTOMER_REQUEST_FORM.value,
-                  FILE_TYPES.REQUEST_EARMARK_ACCOUNT.value,
-                  FILE_TYPES.FILE_TYP_5.value, // ✅ ເພີ່ມໃໝ່
                 ].includes(fileType.value);
 
                 return (

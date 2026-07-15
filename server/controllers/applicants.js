@@ -99,17 +99,19 @@ exports.getApplicant = (req, res) => {
 
 /**
  * Upload documents for an applicant
+ * ✅ ເຫຼືອບັງຄັບພຽງ 2 ໄຟລ໌: registration_form_credit_card, customer_request_form
+ * ✅ ບໍ່ບັງຄັບອີກຕໍ່ໄປ: registration_form_gif_fina, request_earmark_account, file_typ_5
  */
 exports.uploadDocuments = (req, res) => {
   upload(req, res, (err) => {
     if (err) {
       logger.error('Upload error:', err);
-      console.error('❌ MULTER ERROR:', err); // ✅ ເພີ່ມ
+      console.error('❌ MULTER ERROR:', err);
       return badRequest(res, err.message || ERROR_MESSAGES.FILE_UPLOAD_FAILED);
     }
 
-    console.log('✅ req.files received:', Object.keys(req.files || {})); // ✅ ເພີ່ມ
-    console.log('✅ req.body:', req.body); // ✅ ເພີ່ມ
+    console.log('✅ req.files received:', Object.keys(req.files || {}));
+    console.log('✅ req.body:', req.body);
 
     const { applicant_id } = req.body;
     const data_entry_employee_id = req.user?.id;
@@ -120,23 +122,11 @@ exports.uploadDocuments = (req, res) => {
     if (!data_entry_employee_id) {
       return unauthorized(res, ERROR_MESSAGES.TOKEN_MISSING);
     }
-    // if (!req.files || !req.files['registration_form_credit_card']) {
-    //   return badRequest(res, ERROR_MESSAGES.REGISTRATION_FORM_CREDIT_CARD_REQUIRED);
-    // }
-    // if (!req.files || !req.files['registration_form_gif_fina']) {
-    //   return badRequest(res, ERROR_MESSAGES.REGISTRATION_FORM_GIF_FINA_REQUIRED);
-    // }
-    // // ✅ ເພີ່ມໃໝ່
-    // if (!req.files || !req.files['file_typ_5']) {
-    //   return badRequest(res, ERROR_MESSAGES.FILE_TYP_5_REQUIRED);
-    // }
-    // ✅ ແກ້ໃຫ້ກວດທຸກໄຟລ໌ທີ່ບັງຄັບ
+
+    // ✅ ກວດສະເພາະ 2 ໄຟລ໌ບັງຄັບ
     const requiredFileTypes = [
       'registration_form_credit_card',
-      'registration_form_gif_fina',
       'customer_request_form',
-      'request_earmark_account',
-      'file_typ_5',
     ];
 
     for (const ft of requiredFileTypes) {
@@ -174,48 +164,16 @@ exports.uploadDocuments = (req, res) => {
             });
           }
 
-          // const insertQuery = 'INSERT INTO applicant_documents (applicant_id, file_type, file_path) VALUES (?, ?, ?)';
-          // const uploadedFiles = [];
-          // const errors = [];
-          // const fileTypes = Object.values(FILE_TYPES);
-
-          // let filesProcessed = 0;
-          // const filesToProcess = fileTypes.filter(ft => req.files[ft]).length;
-
-          // fileTypes.forEach((fileType) => {
-          //   if (!req.files[fileType]) {
-          //     filesProcessed++;
-          //     if (filesProcessed === filesToProcess) {
-          //       finalizeUpload();
-          //     }
-          //     return;
-          //   }
-          //   const file = req.files[fileType][0];
-          //   const file_path = `applicant_documents/${fileType}/${file.filename}`;
-
-          //   connection.query(insertQuery, [applicant_id, fileType, file_path], (insertErr) => {
-          //     if (insertErr) {
-          //       errors.push(`Failed to store ${fileType}: ${insertErr.message}`);
-          //     } else {
-          //       uploadedFiles.push({ applicant_id, file_type: fileType, file_path });
-          //     }
-          //     filesProcessed++;
-          //     if (filesProcessed === filesToProcess) {
-          //       finalizeUpload();
-          //     }
-          //   });
-          // });
           const insertQuery = 'INSERT INTO applicant_documents (applicant_id, file_type, file_path) VALUES (?, ?, ?)';
           const uploadedFiles = [];
           const errors = [];
           const fileTypes = Object.values(FILE_TYPES);
 
-          // ✅ ກັ່ນສະເພາະໄຟລ໌ທີ່ມາຈິງໆ
+          // ✅ ກັ່ນສະເພາະໄຟລ໌ທີ່ມາຈິງໆ (ໄຟລ໌ທີ່ບໍ່ບັງຄັບອາດຈະບໍ່ມາກໍ່ໄດ້)
           const presentFiles = fileTypes.filter(ft => req.files && req.files[ft]);
 
-          console.log('📁 Files to process:', presentFiles); // debug
+          console.log('📁 Files to process:', presentFiles);
 
-          // ✅ ຖ້າບໍ່ມີໄຟລ໌ເລີຍ
           if (presentFiles.length === 0) {
             return badRequest(res, 'No files uploaded');
           }
@@ -228,7 +186,7 @@ exports.uploadDocuments = (req, res) => {
 
             connection.query(insertQuery, [applicant_id, fileType, file_path], (insertErr) => {
               if (insertErr) {
-                console.error('❌ Insert error:', insertErr); // debug
+                console.error('❌ Insert error:', insertErr);
                 errors.push(`Failed to store ${fileType}: ${insertErr.message}`);
               } else {
                 uploadedFiles.push({ applicant_id, file_type: fileType, file_path });
@@ -282,6 +240,7 @@ exports.uploadDocuments = (req, res) => {
 
 /**
  * Create new applicant
+ * ✅ ບໍ່ບັງຄັບອີກຕໍ່ໄປ: relationship_status, doc_number, issued_by, issued_date, expiry_date
  */
 exports.createApplicant = (req, res) => {
   const {
@@ -309,7 +268,7 @@ exports.createApplicant = (req, res) => {
     return unauthorized(res, ERROR_MESSAGES.TOKEN_MISSING);
   }
 
-  // Validation
+  // ✅ Validation — ລຶບອອກ: relationship_status, doc_number, issued_by, issued_date, expiry_date
   const requiredFields = [
     { field: name, name: 'name' },
     { field: surname, name: 'surname' },
@@ -318,12 +277,7 @@ exports.createApplicant = (req, res) => {
     { field: gender, name: 'gender' },
     { field: province_id, name: 'province_id' },
     { field: district_id, name: 'district_id' },
-    { field: relationship_status, name: 'relationship_status' },
     { field: doc_type, name: 'doc_type' },
-    { field: doc_number, name: 'doc_number' },
-    { field: issued_by, name: 'issued_by' },
-    { field: issued_date, name: 'issued_date' },
-    { field: expiry_date, name: 'expiry_date' },
     { field: lbd_ctm_key, name: 'lbd_ctm_key' },
   ];
 
@@ -332,13 +286,19 @@ exports.createApplicant = (req, res) => {
     return badRequest(res, ERROR_MESSAGES.MISSING_FIELDS);
   }
 
-  // Validate dates
-  if (isNaN(Date.parse(dob)) || isNaN(Date.parse(issued_date)) || isNaN(Date.parse(expiry_date))) {
+  // ✅ Validate dates — dob ບັງຄັບຢູ່ສະເໝີ, issued_date/expiry_date ກວດສະເພາະມີຄ່າ
+  if (isNaN(Date.parse(dob))) {
+    return badRequest(res, ERROR_MESSAGES.INVALID_DATE_FORMAT);
+  }
+  if (issued_date && isNaN(Date.parse(issued_date))) {
+    return badRequest(res, ERROR_MESSAGES.INVALID_DATE_FORMAT);
+  }
+  if (expiry_date && isNaN(Date.parse(expiry_date))) {
     return badRequest(res, ERROR_MESSAGES.INVALID_DATE_FORMAT);
   }
 
-  // Validate enums
-  if (!Object.values(RELATIONSHIP_STATUS).includes(relationship_status)) {
+  // ✅ Validate enums — relationship_status ກວດສະເພາະມີຄ່າ
+  if (relationship_status && !Object.values(RELATIONSHIP_STATUS).includes(relationship_status)) {
     return badRequest(res, ERROR_MESSAGES.INVALID_RELATIONSHIP_STATUS);
   }
 
@@ -421,28 +381,8 @@ exports.createApplicant = (req, res) => {
             });
           }
 
-          // 🟢 ຍ້າຍການກວດສອບເລກທີເອກະສານ (doc_number) ມາໄວ້ບ່ອນນີ້ ກ່ອນການ Insert
-          const validatedocument = 'SELECT doc_type FROM applicants WHERE doc_number = ? AND doc_type = ?';
-          connection.query(validatedocument, [doc_number, doc_type], (docCheckErr, docCheckResults) => {
-            if (docCheckErr) {
-              logger.error('Error checking document existence:', docCheckErr);
-              return connection.rollback(() => {
-                connection.release();
-                serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
-              });
-            }
-
-            if (docCheckResults.length > 0) {
-              return connection.rollback(() => {
-                connection.release();
-                return res.status(409).json({
-                  status: 'error',
-                  message: "ເລກທີໃນປະເພດເອກະສານນີ້ມີຢູ່ແລ້ວ",
-                });
-              });
-            }
-
-            // 🟢 ຖ້າເອກະສານບໍ່ຊ້ຳ ຈຶ່ງຈະເລີ່ມຂະບວນການ INSERT ຢູ່ດ້ານໃນ Callback ນີ້ເລີຍ
+          // ✅ ຟັງຊັນ insert ຈິງ (ຫໍ່ໄວ້ເພື່ອເອີ້ນໄດ້ທັງກໍລະນີ doc_number ວ່າງ ແລະ ບໍ່ວ່າງ)
+          const insertApplicant = () => {
             const insertQuery = `
               INSERT INTO applicants (
                 fina_ctm_key, lbd_ctm_key, credit_rating, name, surname, dob, village, gender,
@@ -461,12 +401,12 @@ exports.createApplicant = (req, res) => {
               gender,
               province_id,
               district_id,
-              relationship_status,
+              relationship_status || null,
               doc_type,
-              doc_number,
-              issued_by,
-              issued_date,
-              expiry_date,
+              doc_number || null,
+              issued_by || null,
+              issued_date || null,
+              expiry_date || null,
             ];
 
             connection.query(insertQuery, values, (insertErr, result) => {
@@ -509,9 +449,37 @@ exports.createApplicant = (req, res) => {
                     expiry_date,
                   },
                 });
-              }); // End commit // End audit query
-            }); // End insert query
-          }); // End document check query
+              });
+            });
+          };
+
+          // ✅ ຖ້າ doc_number ວ່າງ, ຂ້າມການກວດເອກະສານຊ້ຳ (ບໍ່ດັ່ງນັ້ນຫຼາຍ record ຄ່າຫວ່າງຈະຖືກຕີວ່າຊ້ຳກັນ)
+          if (!doc_number) {
+            return insertApplicant();
+          }
+
+          const validatedocument = 'SELECT doc_type FROM applicants WHERE doc_number = ? AND doc_type = ?';
+          connection.query(validatedocument, [doc_number, doc_type], (docCheckErr, docCheckResults) => {
+            if (docCheckErr) {
+              logger.error('Error checking document existence:', docCheckErr);
+              return connection.rollback(() => {
+                connection.release();
+                serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+              });
+            }
+
+            if (docCheckResults.length > 0) {
+              return connection.rollback(() => {
+                connection.release();
+                return res.status(409).json({
+                  status: 'error',
+                  message: "ເລກທີໃນປະເພດເອກະສານນີ້ມີຢູ່ແລ້ວ",
+                });
+              });
+            }
+
+            insertApplicant();
+          });
         }); // End location query
       }); // End keys check query
     }); // End beginTransaction
@@ -520,7 +488,6 @@ exports.createApplicant = (req, res) => {
 
 /**
  * Get provinces
- * Note: This should be moved to address/provinces controller
  */
 exports.getProvinces = (req, res) => {
   const query = 'SELECT id, name FROM provinces ORDER BY name';
@@ -535,7 +502,6 @@ exports.getProvinces = (req, res) => {
 
 /**
  * Get districts by province
- * Note: This should be moved to address/districts controller
  */
 exports.getDistricts = (req, res) => {
   const { province_id } = req.params;
@@ -645,6 +611,7 @@ const deleteOldFile = (applicant_id, fileType, connection, callback) => {
 
 /**
  * Update applicant with optional file uploads
+ * ✅ ບໍ່ບັງຄັບອີກຕໍ່ໄປ: relationship_status, doc_number, issued_by, issued_date, expiry_date
  */
 exports.updateApplicant = (req, res) => {
   upload(req, res, (err) => {
@@ -679,6 +646,7 @@ exports.updateApplicant = (req, res) => {
       return unauthorized(res, ERROR_MESSAGES.TOKEN_MISSING);
     }
 
+    // ✅ ລຶບອອກ: relationship_status, doc_number, issued_by, issued_date, expiry_date
     const requiredFields = [
       { field: name, name: 'name' },
       { field: surname, name: 'surname' },
@@ -687,12 +655,7 @@ exports.updateApplicant = (req, res) => {
       { field: gender, name: 'gender' },
       { field: province_id, name: 'province_id' },
       { field: district_id, name: 'district_id' },
-      { field: relationship_status, name: 'relationship_status' },
       { field: doc_type, name: 'doc_type' },
-      { field: doc_number, name: 'doc_number' },
-      { field: issued_by, name: 'issued_by' },
-      { field: issued_date, name: 'issued_date' },
-      { field: expiry_date, name: 'expiry_date' },
       { field: lbd_ctm_key, name: 'lbd_ctm_key' },
     ];
 
@@ -701,11 +664,18 @@ exports.updateApplicant = (req, res) => {
       return badRequest(res, ERROR_MESSAGES.MISSING_FIELDS);
     }
 
-    if (isNaN(Date.parse(dob)) || isNaN(Date.parse(issued_date)) || isNaN(Date.parse(expiry_date))) {
+    // ✅ dob ບັງຄັບຢູ່ສະເໝີ, issued_date/expiry_date ກວດສະເພາະມີຄ່າ
+    if (isNaN(Date.parse(dob))) {
+      return badRequest(res, ERROR_MESSAGES.INVALID_DATE_FORMAT);
+    }
+    if (issued_date && isNaN(Date.parse(issued_date))) {
+      return badRequest(res, ERROR_MESSAGES.INVALID_DATE_FORMAT);
+    }
+    if (expiry_date && isNaN(Date.parse(expiry_date))) {
       return badRequest(res, ERROR_MESSAGES.INVALID_DATE_FORMAT);
     }
 
-    if (!Object.values(RELATIONSHIP_STATUS).includes(relationship_status)) {
+    if (relationship_status && !Object.values(RELATIONSHIP_STATUS).includes(relationship_status)) {
       return badRequest(res, ERROR_MESSAGES.INVALID_RELATIONSHIP_STATUS);
     }
 
@@ -772,8 +742,9 @@ exports.updateApplicant = (req, res) => {
 
           fieldsToCheck.forEach((field) => {
             const newValue = req.body[field];
-            if (newValue !== undefined && newValue !== null && newValue !== currentData[field]) {
-              updateFields[field] = newValue;
+            if (newValue !== undefined && newValue !== currentData[field]) {
+              // ✅ ອະນຸຍາດໃຫ້ set ເປັນ null/empty ໄດ້ ສຳລັບຟິວທີ່ບໍ່ບັງຄັບແລ້ວ
+              updateFields[field] = newValue === '' ? null : newValue;
             }
           });
 
@@ -825,6 +796,128 @@ exports.updateApplicant = (req, res) => {
                     });
                   }
 
+                  // ✅ ຟັງຊັນສືບຕໍ່ update ຫຼັງຈາກກວດເອກະສານຊ້ຳ (ຫຼືຂ້າມ ຖ້າ doc_number ວ່າງ)
+                  const proceedWithUpdate = () => {
+                    const uploadedFiles = [];
+
+                    const updateApplicantQuery = `
+                      UPDATE applicants SET
+                        ${Object.keys(updateFields).map(field => `${field} = ?`).join(', ')}
+                      WHERE id = ?
+                    `;
+                    const values = [...Object.values(updateFields), applicant_id];
+
+                    const executeNextStep = () => {
+                      const fileTypes = Object.values(FILE_TYPES);
+                      const fileErrors = [];
+                      let filesProcessed = 0;
+                      const filesToProcess = fileTypes.filter(ft => req.files[ft]).length;
+
+                      if (filesToProcess === 0) {
+                        logger.debug('No files to upload, proceeding to audit log');
+                        insertAuditLog();
+                        return;
+                      }
+
+                      fileTypes.forEach((fileType) => {
+                        if (!req.files[fileType]) {
+                          filesProcessed++;
+                          if (filesProcessed === filesToProcess) {
+                            finalizeFileUpdate();
+                          }
+                          return;
+                        }
+
+                        const file = req.files[fileType][0];
+                        const new_file_path = `applicant_documents/${fileType}/${file.filename}`;
+                        logger.debug(`Uploading new file: ${new_file_path}`);
+
+                        deleteOldFile(applicant_id, fileType, connection, (delErr) => {
+                          if (delErr) {
+                            fileErrors.push(`Failed to delete old file for ${fileType}: ${delErr.message}`);
+                            filesProcessed++;
+                            if (filesProcessed === filesToProcess) {
+                              finalizeFileUpdate();
+                            }
+                            return;
+                          }
+
+                          connection.query(
+                            'INSERT INTO applicant_documents (applicant_id, file_type, file_path) VALUES (?, ?, ?)',
+                            [applicant_id, fileType, new_file_path],
+                            (insertErr) => {
+                              if (insertErr) {
+                                logger.error(`Error inserting new file ${fileType}:`, insertErr);
+                                fileErrors.push(`Failed to insert new file ${fileType}: ${insertErr.message}`);
+                              } else {
+                                uploadedFiles.push({ applicant_id, file_type: fileType, file_path: new_file_path });
+                              }
+                              filesProcessed++;
+                              if (filesProcessed === filesToProcess) {
+                                finalizeFileUpdate();
+                              }
+                            }
+                          );
+                        });
+                      });
+
+                      function finalizeFileUpdate() {
+                        if (fileErrors.length > 0) {
+                          logger.error('File update errors:', fileErrors);
+                          return connection.rollback(() => {
+                            connection.release();
+                            serverError(res, ERROR_MESSAGES.DATABASE_ERROR, { errors: fileErrors });
+                          });
+                        }
+                        insertAuditLog();
+                      }
+                    };
+
+                    function insertAuditLog() {
+                      connection.query(
+                        'INSERT INTO audit_logs (applicant_id, data_entry_employee_id, action, status, timestamp) VALUES (?, ?, ?, ?, NOW())',
+                        [applicant_id, data_entry_employee_id, AUDIT_ACTIONS.EDIT_DOCUMENTS, APPLICANT_STATUS.IN_PROGRESS],
+                        (auditErr) => {
+                          if (auditErr) {
+                            logger.error('Error inserting audit log:', auditErr);
+                            return connection.rollback(() => {
+                              connection.release();
+                              serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+                            });
+                          }
+
+                          connection.commit((commitErr) => {
+                            if (commitErr) {
+                              logger.error('Error committing transaction:', commitErr);
+                              return connection.rollback(() => {
+                                connection.release();
+                                serverError(res, ERROR_MESSAGES.TRANSACTION_ERROR);
+                              });
+                            }
+                            connection.release();
+                            return success(res, SUCCESS_MESSAGES.APPLICANT_UPDATED, { documents: uploadedFiles });
+                          });
+                        }
+                      );
+                    }
+
+                    connection.query(updateApplicantQuery, values, (updateErr) => {
+                      if (updateErr) {
+                        logger.error('Error updating applicant:', updateErr);
+                        return connection.rollback(() => {
+                          connection.release();
+                          serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
+                        });
+                      }
+                      executeNextStep();
+                    });
+                  };
+
+                  // ✅ ຖ້າ doc_number ວ່າງ, ຂ້າມການກວດເອກະສານຊ້ຳ
+                  if (!doc_number) {
+                    return proceedWithUpdate();
+                  }
+
                   const checkCertificateQuery = `
                     SELECT id FROM applicants
                     WHERE doc_type = ? AND doc_number = ? AND id != ?
@@ -849,122 +942,7 @@ exports.updateApplicant = (req, res) => {
                         });
                       }
 
-                      const uploadedFiles = [];
-                      let updated = false;
-
-                      const updateApplicantQuery = `
-                        UPDATE applicants SET
-                          ${Object.keys(updateFields).map(field => `${field} = ?`).join(', ')}
-                        WHERE id = ?
-                      `;
-                      const values = [...Object.values(updateFields), applicant_id];
-
-                      const executeNextStep = () => {
-                        const fileTypes = Object.values(FILE_TYPES);
-                        const fileErrors = [];
-                        let filesProcessed = 0;
-                        const filesToProcess = fileTypes.filter(ft => req.files[ft]).length;
-
-                        if (filesToProcess === 0) {
-                          logger.debug('No files to upload, proceeding to audit log');
-                          insertAuditLog();
-                          return;
-                        }
-
-                        fileTypes.forEach((fileType) => {
-                          if (!req.files[fileType]) {
-                            filesProcessed++;
-                            if (filesProcessed === filesToProcess) {
-                              finalizeFileUpdate();
-                            }
-                            return;
-                          }
-
-                          const file = req.files[fileType][0];
-                          const new_file_path = `applicant_documents/${fileType}/${file.filename}`;
-                          logger.debug(`Uploading new file: ${new_file_path}`);
-
-                          deleteOldFile(applicant_id, fileType, connection, (delErr) => {
-                            if (delErr) {
-                              fileErrors.push(`Failed to delete old file for ${fileType}: ${delErr.message}`);
-                              filesProcessed++;
-                              if (filesProcessed === filesToProcess) {
-                                finalizeFileUpdate();
-                              }
-                              return;
-                            }
-
-                            connection.query(
-                              'INSERT INTO applicant_documents (applicant_id, file_type, file_path) VALUES (?, ?, ?)',
-                              [applicant_id, fileType, new_file_path],
-                              (insertErr) => {
-                                if (insertErr) {
-                                  logger.error(`Error inserting new file ${fileType}:`, insertErr);
-                                  fileErrors.push(`Failed to insert new file ${fileType}: ${insertErr.message}`);
-                                } else {
-                                  uploadedFiles.push({ applicant_id, file_type: fileType, file_path: new_file_path });
-                                  updated = true;
-                                }
-                                filesProcessed++;
-                                if (filesProcessed === filesToProcess) {
-                                  finalizeFileUpdate();
-                                }
-                              }
-                            );
-                          });
-                        });
-
-                        function finalizeFileUpdate() {
-                          if (fileErrors.length > 0) {
-                            logger.error('File update errors:', fileErrors);
-                            return connection.rollback(() => {
-                              connection.release();
-                              serverError(res, ERROR_MESSAGES.DATABASE_ERROR, { errors: fileErrors });
-                            });
-                          }
-                          insertAuditLog();
-                        }
-                      };
-
-                      function insertAuditLog() {
-                        connection.query(
-                          'INSERT INTO audit_logs (applicant_id, data_entry_employee_id, action, status, timestamp) VALUES (?, ?, ?, ?, NOW())',
-                          [applicant_id, data_entry_employee_id, AUDIT_ACTIONS.EDIT_DOCUMENTS, APPLICANT_STATUS.IN_PROGRESS],
-                          (auditErr) => {
-                            if (auditErr) {
-                              logger.error('Error inserting audit log:', auditErr);
-                              return connection.rollback(() => {
-                                connection.release();
-                                serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
-                              });
-                            }
-
-                            connection.commit((commitErr) => {
-                              if (commitErr) {
-                                logger.error('Error committing transaction:', commitErr);
-                                return connection.rollback(() => {
-                                  connection.release();
-                                  serverError(res, ERROR_MESSAGES.TRANSACTION_ERROR);
-                                });
-                              }
-                              connection.release();
-                              return success(res, SUCCESS_MESSAGES.APPLICANT_UPDATED, { documents: uploadedFiles });
-                            });
-                          }
-                        );
-                      }
-
-                      connection.query(updateApplicantQuery, values, (updateErr) => {
-                        if (updateErr) {
-                          logger.error('Error updating applicant:', updateErr);
-                          return connection.rollback(() => {
-                            connection.release();
-                            serverError(res, ERROR_MESSAGES.DATABASE_ERROR);
-                          });
-                        }
-                        updated = true;
-                        executeNextStep();
-                      });
+                      proceedWithUpdate();
                     }
                   );
                 }

@@ -27,6 +27,21 @@ export const AuthProvider = ({ children, navigateRef }) => {
     setLoading(false);
   }, []);
 
+  // ✅ Heartbeat effect - ຮັນທຸກ 90 ວິນາທີ ຂະນະ user login ຢູ່
+  useEffect(() => {
+    if (!user) return; // ບໍ່ login ຢູ່ → ບໍ່ຕ້ອງຮັນ
+
+    const intervalId = setInterval(() => {
+      authAPI.heartbeat().catch((err) => {
+        // ຖ້າ heartbeat ຜິດພາດ (ເຊັ່ນ session ຖືກແທນທີ່) axiosInstance interceptor
+        // ຈະຈັດການ 401 ແລະ redirect ໄປ login ໃຫ້ເອງແລ້ວ, ບໍ່ຕ້ອງເຮັດຫຍັງເພີ່ມທີ່ນີ້
+        console.error('Heartbeat failed:', err);
+      });
+    }, 90 * 1000); // ✅ 90 ວິນາທີ (ໜ້ອຍກວ່າ 2 ນາທີ ໃຫ້ມີ buffer)
+
+    return () => clearInterval(intervalId); // ✅ cleanup ຕອນ user ປ່ຽນ/logout/unmount
+  }, [user]);
+
   /**
    * Login with credentials
    */
@@ -58,8 +73,16 @@ export const AuthProvider = ({ children, navigateRef }) => {
   /**
    * Logout and clear session
    */
-  const logout = useCallback(() => {
-    authAPI.logout();
+  // const logout = useCallback(() => {
+  //   authAPI.logout();
+  //   setUser(null);
+  //   navigateRef.current?.(ROUTES.LOGIN);
+  // }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  /**
+ * Logout and clear session
+ */
+  const logout = useCallback(async () => {
+    await authAPI.logout(); // ✅ ລໍໃຫ້ server ລ້າງ session_id ກ່ອນ
     setUser(null);
     navigateRef.current?.(ROUTES.LOGIN);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

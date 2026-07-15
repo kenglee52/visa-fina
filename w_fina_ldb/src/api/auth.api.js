@@ -25,10 +25,22 @@ export const authAPI = {
   /**
    * Logout - clear local storage
    */
-  logout: () => {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.EMPLOYEE);
+  // logout: () => {
+  //   localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  //   localStorage.removeItem(STORAGE_KEYS.EMPLOYEE);
+  // },
+  logout: async () => {
+    try {
+      await axiosInstance.post(API_ENDPOINTS.LOGOUT);
+    } catch (error) {
+      // ✅ ຖ້າ API ຜິດພາດ (ເຊັ່ນ token ໝົດອາຍຸແລ້ວ) ກໍ່ຍັງລຶບ local storage ຕໍ່ໄປປົກກະຕິ
+      console.error('Logout API error:', error);
+    } finally {
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.EMPLOYEE);
+    }
   },
+
 
   /**
    * Get stored token
@@ -55,4 +67,8 @@ export const authAPI = {
     localStorage.setItem(STORAGE_KEYS.TOKEN, token);
     localStorage.setItem(STORAGE_KEYS.EMPLOYEE, JSON.stringify(employee));
   },
+
+  //  ✅ Heartbeat - ຍືດອາຍຸ session
+   
+  heartbeat: () => axiosInstance.post(API_ENDPOINTS.HEARTBEAT),
 };

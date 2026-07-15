@@ -34,7 +34,7 @@ export const FILE_TYPES = {
   },
   REQUEST_EARMARK_ACCOUNT: {
     value: 'request_earmark_account',
-    label: 'ໃບສະເໜີຂໍ Block ບັນຊີ'
+    label: 'ແບບຟອມອື່ນໆ'
   },
   REGISTRATION_FORM_CREDIT_CARD: {
     value: 'registration_form_credit_card',
@@ -42,12 +42,12 @@ export const FILE_TYPES = {
   },
   REGISTRATION_FORM_GIF_FINA: {
     value: 'registration_form_gif_fina',
-    label: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ'
+    label: 'ແບບຟອມອື່ນໆ'
   },
   // ✅ ເພີ່ມໃໝ່
   FILE_TYP_5: {
     value: 'file_typ_5',
-    label: 'ຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ'
+    label: 'ແບບຟອມອື່ນໆ'
   },
 };
 // Relationship Statuses

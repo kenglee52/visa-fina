@@ -325,14 +325,12 @@ const EditApplicant = () => {
       // ✅ ລົບສຳເລັດ: ສະແດງ popup ແຕ່ບໍ່ navigate ອອກ
       setDialogTitle('ສຳເລັດ');
       setDialogMessage(`ໄຟລ໌ ${fileToDelete} ຖືກລົບສຳເລັດ`);
-      setShouldNavigateToFollow(false); // ← ຢູ່ໜ້ານີ້ຕໍ່
-      setIsResultDialogOpen(true);
+      setIsErrorDialogOpen(true);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'ບໍ່ສາມາດລົບໄຟລ໌ໄດ້';
       setDialogTitle('ຂໍ້ຜິດພາດ');
       setDialogMessage(errorMessage);
-      setShouldNavigateToFollow(false);
-      setIsResultDialogOpen(true);
+      setIsErrorDialogOpen(true);
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
         window.location.href = '/';
@@ -368,6 +366,7 @@ const EditApplicant = () => {
     return error.includes(fieldLabel) ? 'border-red-500 animate-pulse' : '';
   };
 
+  // ✅ ລຶບອອກຈາກ required: relationship_status, doc_number, issued_by, issued_date, expiry_date
   const validateForm = () => {
     const requiredFields = [
       { key: 'lbd_ctm_key', label: 'LBD CTM ID' },
@@ -378,12 +377,7 @@ const EditApplicant = () => {
       { key: 'gender', label: 'ເພດ' },
       { key: 'province_id', label: 'ແຂວງ' },
       { key: 'district_id', label: 'ເມືອງ' },
-      { key: 'relationship_status', label: 'ສະຖານະຄວາມສຳພັນ' },
       { key: 'doc_type', label: 'ປະເພດເອກະສານ' },
-      { key: 'doc_number', label: 'ເລກທີ່ເອກະສານ' },
-      { key: 'issued_by', label: 'ຜູ້ອອກເອກະສານ' },
-      { key: 'issued_date', label: 'ວັນທີ່ອອກ' },
-      { key: 'expiry_date', label: 'ວັນທີ່ໝົດອາຍຸ' },
     ];
 
     for (const { key, label } of requiredFields) {
@@ -392,11 +386,19 @@ const EditApplicant = () => {
       }
     }
 
-    if (isNaN(Date.parse(formData.dob)) || isNaN(Date.parse(formData.issued_date)) || isNaN(Date.parse(formData.expiry_date))) {
-      return 'ຮູບແບບວັນທີ່ບໍ່ຖືກຕ້ອງ (ວັນເດືອນປີເກີດ, ວັນທີ່ອອກ, ຫຼືວັນທີ່ໝົດອາຍຸ)';
+    // ✅ dob ບັງຄັບກວດຢູ່ສະເໝີ, issued_date/expiry_date ກວດສະເພາະມີຄ່າ (ບໍ່ບັງຄັບແລ້ວ)
+    if (isNaN(Date.parse(formData.dob))) {
+      return 'ຮູບແບບວັນເດືອນປີເກີດບໍ່ຖືກຕ້ອງ';
+    }
+    if (formData.issued_date && isNaN(Date.parse(formData.issued_date))) {
+      return 'ຮູບແບບວັນທີ່ອອກບໍ່ຖືກຕ້ອງ';
+    }
+    if (formData.expiry_date && isNaN(Date.parse(formData.expiry_date))) {
+      return 'ຮູບແບບວັນທີ່ໝົດອາຍຸບໍ່ຖືກຕ້ອງ';
     }
 
-    if (!['single', 'married', 'divorced', 'widowed'].includes(formData.relationship_status)) {
+    // ✅ relationship_status ກວດສະເພາະມີຄ່າ (ບໍ່ບັງຄັບແລ້ວ)
+    if (formData.relationship_status && !['single', 'married', 'divorced', 'widowed'].includes(formData.relationship_status)) {
       return 'ກະລຸນາເລືອກສະຖານະຄວາມສຳພັນໃຫ້ຖືກຕ້ອງ';
     }
 
@@ -412,13 +414,11 @@ const EditApplicant = () => {
       return 'FINA Customer ID ແລະ LBB Customer ID ຕ້ອງບໍ່ຊ້ຳກັນ';
     }
 
-    // ✅ ແທນ 2 if ສຸດທ້າຍເກົ່າດ້ວຍໂຕນີ້
+    // ✅ ເຫຼືອບັງຄັບພຽງ 2 ໄຟລ໌: registration_form_credit_card, customer_request_form
+    // ✅ ບໍ່ບັງຄັບອີກຕໍ່ໄປ: request_earmark_account, registration_form_gif_fina, file_typ_5
     const requiredFileTypes = [
       { key: 'registration_form_credit_card', label: 'ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ' },
-      { key: 'registration_form_gif_fina', label: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ' },
-      { key: 'customer_request_form', label: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ' },        // ✅ ເພີ່ມ
-      { key: 'request_earmark_account', label: 'ໃບສະເໜີຂໍ Block ບັນຊີ' },
-      { key: 'file_typ_5', label: 'ຄໍາແນະ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ' }, // ✅ ເພີ່ມ
+      { key: 'customer_request_form', label: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ' },
     ];
 
     for (const { key, label } of requiredFileTypes) {
@@ -431,6 +431,7 @@ const EditApplicant = () => {
         return `ກະລຸນາອັບໂຫຼດ ${label} (ບັງຄັບ)`;
       }
     }
+
 
     return '';
   };
@@ -492,26 +493,14 @@ const EditApplicant = () => {
         registration_form_gif_fina: null,
         file_typ_5: null, // ✅ ເພີ່ມ
       });
-      // setDialogTitle('ສຳເລັດ');
-      // setDialogMessage(response.data.message || 'ຂໍ້ມູນຖືກແກ້ໄຂສຳເລັດ');
-      // // setIsErrorDialogOpen(true);
-      // // setTimeout(() => navigate('/data-entry/status'), 1500);
-      // toast.success("ຂໍ້ມູນຖືກແກ້ໄຂສຳເລັດ");
-      // setTimeout(() => navigate("/data-entry/status"), 1500);
 
       Swal.fire({
         title: "ສຳເລັດ",
         icon: "success",
         text: "ແກ້ໄຂຂໍ້ມູນສຳເລັດ",
         timer: 1500,
-        // showConfirmButton: false
       });
       navigate("/data-entry/status")
-      // .then((result)=> {
-      //   if(result.isConfirmed){
-      //     navigate("/data-entry/status");
-      //   }
-      // })
 
     } catch (err) {
       console.error('Error updating applicant:', err);
@@ -720,13 +709,13 @@ const EditApplicant = () => {
                   <span className="text-red-500 text-sm">ກະລຸນາເລືອກເມືອງ</span>
                 )}
               </div>
+              {/* ສະຖານະຄວາມສຳພັນ — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">ສະຖານະຄວາມສຳພັນ <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ສະຖານະຄວາມສຳພັນ</label>
                 <Select
                   name="relationship_status"
                   value={formData.relationship_status}
                   onValueChange={(value) => setFormData((prev) => ({ ...prev, relationship_status: value }))}
-                  required
                 >
                   <SelectTrigger className={`mt-1 h-10 transition-colors ${getFieldError('ສະຖານະຄວາມສຳພັນ')}`}>
                     <SelectValue placeholder="ເລືອກສະຖານະ" />
@@ -764,54 +753,54 @@ const EditApplicant = () => {
                   <span className="text-red-500 text-sm">ກະລຸນາເລືອກປະເພດເອກະສານ</span>
                 )}
               </div>
+              {/* ເລກທີ່ເອກະສານ — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">ເລກທີ່ເອກະສານ <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ເລກທີ່ເອກະສານ</label>
                 <Input
                   name="doc_number"
                   value={formData.doc_number}
                   onChange={handleInputChange}
-                  required
                   className={`mt-1 h-10 transition-colors ${getFieldError('ເລກທີ່ເອກະສານ')}`}
                 />
                 {error.includes('ເລກທີ່ເອກະສານ') && (
                   <span className="text-red-500 text-sm">ກະລຸນາປ້ອນເລກທີ່ເອກະສານ</span>
                 )}
               </div>
+              {/* ອອກໂດຍ — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">ອອກໂດຍ <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ອອກໂດຍ</label>
                 <Input
                   name="issued_by"
                   value={formData.issued_by}
                   onChange={handleInputChange}
-                  required
                   className={`mt-1 h-10 transition-colors ${getFieldError('ຜູ້ອອກເອກະສານ')}`}
                 />
                 {error.includes('ຜູ້ອອກເອກະສານ') && (
                   <span className="text-red-500 text-sm">ກະລຸນາປ້ອນຜູ້ອອກເອກະສານ</span>
                 )}
               </div>
+              {/* ວັນທີ່ອອກ — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">ວັນທີ່ອອກ <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ວັນທີ່ອອກ</label>
                 <DateInput
                   name="issued_date"
                   value={formData.issued_date}
                   onChange={handleDateChange}
                   placeholder="dd/mm/yyyy"
-                  required
                   className={`mt-1 h-10 transition-colors ${getFieldError('ວັນທີ່ອອກ')}`}
                 />
                 {error.includes('ວັນທີ່ອອກ') && (
                   <span className="text-red-500 text-sm">{error.includes('ຮູບແບບ') ? error : 'ກະລຸນາປ້ອນວັນທີ່ອອກ'}</span>
                 )}
               </div>
+              {/* ວັນທີ່ໝົດອາຍຸ — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">ວັນທີ່ໝົດອາຍຸ <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ວັນທີ່ໝົດອາຍຸ</label>
                 <DateInput
                   name="expiry_date"
                   value={formData.expiry_date}
                   onChange={handleDateChange}
                   placeholder="dd/mm/yyyy"
-                  required
                   className={`mt-1 h-10 transition-colors ${getFieldError('ວັນທີ່ໝົດອາຍຸ')}`}
                 />
                 {error.includes('ວັນທີ່ໝົດອາຍຸ') && (
@@ -849,12 +838,13 @@ const EditApplicant = () => {
                 {files.customer_request_form && (
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.customer_request_form.name}</p>
                 )}
-                {error.includes('ແບບຟອມຄຳຂໍຂອງລູກຄ້າ') && (
+                {error.includes('ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ') && (
                   <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ</span>
                 )}
               </div>
+              {/* ໃບສະເໜີຂໍ Block ບັນຊີ — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">ໃບສະເໜີຂໍ Block ບັນຊີ (PDF, ບັງຄັບ)<span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ແບບຟອມອື່ນໆ (PDF)</label>
                 <Input
                   type="file"
                   accept=".pdf"
@@ -884,9 +874,7 @@ const EditApplicant = () => {
                 {files.request_earmark_account && (
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.request_earmark_account.name}</p>
                 )}
-                {error.includes('ໃບສະເໜີຂໍ Block ບັນຊີ') && (
-                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມໃບສະເໜີຂໍ Block ບັນຊີ</span>
-                )}
+                
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ (PDF, ບັງຄັບ) <span className="text-red-600">*</span></label>
@@ -920,18 +908,18 @@ const EditApplicant = () => {
                 {files.registration_form_credit_card && (
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.registration_form_credit_card.name}</p>
                 )}
-                {error.includes('ແບບຟອມລົງທະບຽນບັດເຄຣດິດ') && (
+                {error.includes('ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ') && (
                   <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ</span>
                 )}
               </div>
+              {/*✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ (PDF, ບັງຄັບ) <span className="text-red-600">*</span></label>
+                <label className="block text-sm font-medium text-gray-700">ແບບຟອມອື່ນໆ (PDF)</label>
                 <Input
                   type="file"
                   accept=".pdf"
                   name="registration_form_gif_fina"
                   onChange={(e) => handleFileChange(e, 'registration_form_gif_fina')}
-                  required
                   className={`mt-1 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors ${getFieldError('ແບບຟອມລົງທະບຽນ GIF FINA')}`}
                 />
                 {documents.registration_form_gif_fina && (
@@ -956,25 +944,23 @@ const EditApplicant = () => {
                 {files.registration_form_gif_fina && (
                   <p className="text-sm text-gray-600 mt-1 truncate">ເລືອກແລ້ວ: {files.registration_form_gif_fina.name}</p>
                 )}
-                {error.includes('ແບບຟອມລົງທະບຽນ GIF FINA') && (
-                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ</span>
-                )}
+                
               </div>
+              {/* ຄໍາແນະ ແລະ ເງື່ອນໄຂ — ✅ ບໍ່ບັງຄັບແລ້ວ */}
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  ຄໍາແນະ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ (PDF, ບັງຄັບ) <span className="text-red-600">*</span>
+                  ແບບຟອມອື່ນໆ (PDF)
                 </label>
                 <Input
                   type="file"
                   accept=".pdf"
                   name="file_typ_5"
                   onChange={(e) => handleFileChange(e, 'file_typ_5')}
-                  required
                   className={`mt-1 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition-colors ${getFieldError('ຊື່ໄຟລ໌ 5')}`}
                 />
                 {documents.file_typ_5 && (
                   <div className="flex items-center space-x-2 mt-1">
-                    <a  
+                    <a
                       href={`${API_BASE_URL}/${documents.file_typ_5}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -996,9 +982,7 @@ const EditApplicant = () => {
                     ເລືອກແລ້ວ: {files.file_typ_5.name}
                   </p>
                 )}
-                {error.includes('ຊື່ໄຟລ໌ 5') && (
-                  <span className="text-red-500 text-sm">ກະລຸນາອັບໂຫຼດຄໍາແນະ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ</span>
-                )}
+                
               </div>
             </div>
 
@@ -1055,9 +1039,6 @@ const EditApplicant = () => {
         message={dialogMessage}
         onConfirm={() => {
           setIsErrorDialogOpen(false);
-          if (dialogTitle === 'ສຳເລັດ') {
-            navigate(-1);
-          }
         }}
         confirmText="ຕົກລົງ"
       />

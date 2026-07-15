@@ -411,7 +411,7 @@ const Verifier_confirm = () => {
     formatStatus: (s) => ({ in_progress: 'ລໍຖ້າການຕິດຕາມ', rejected: 'ປະຕິເສດ', checked: 'ກວດສອບແລ້ວ' }[s] || '-'),
     formatGender: (g) => g === 'male' ? 'ຊາຍ' : g === 'female' ? 'ຍິງ' : '-',
     formatDocType: (d) => ({ passport: 'ໜັງສືຜ່ານແດນ', id_card: 'ບັດປະຈຳຕົວ', family_book: 'ສຳມະໂນຄົວ', other: 'ອື່ນໆ' }[d] || '-'),
-    formatFileType: (f) => ({ customer_request_form: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ', request_earmark_account: 'ໃບສະເໜີຂໍ Block ບັນຊີ', registration_form_credit_card: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ', registration_form_gif_fina: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ', file_typ_5: 'ຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ', }[f] || f || '-'),
+    formatFileType: (f) => ({ customer_request_form: 'ແບບຟອມຄຳຂໍຂອງລູກຄ້າ', request_earmark_account: 'ແບບຟອມອື່ນໆ', registration_form_credit_card: 'ແບບຟອມລົງທະບຽນບັດເຄຣດິດ', registration_form_gif_fina: 'ແບບຟອມອື່ນໆ', file_typ_5: 'ແບບຟອມອື່ນໆ', }[f] || f || '-'),
     formatRelationshipStatus: (s) => ({ single: 'ໂສດ', married: 'ແຕ່ງງານແລ້ວ', divorced: 'ຢ່າຮ້າງ', widowed: 'ໝ້າຍ/ໝ້າຍຜົວ' }[s] || s || '-'),
   };
 

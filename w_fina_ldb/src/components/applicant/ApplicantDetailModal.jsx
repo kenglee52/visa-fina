@@ -22,10 +22,10 @@ const formatDocType = (d) => ({
 
 const formatFileType = (f) => ({
   customer_request_form: 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ',
-  request_earmark_account: 'ໃບສະເໜີຂໍ Block ບັນຊີ',
+  request_earmark_account: 'ແບບຟອມອື່ນໆ',
   registration_form_credit_card: 'ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ',
-  registration_form_gif_fina: 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ',
-  file_typ_5: 'ຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ',
+  registration_form_gif_fina: 'ແບບຟອມອື່ນໆ',
+  file_typ_5: 'ແບບຟອມອື່ນໆ',
 }[f] || f || '-');
 
 const formatRelationshipStatus = (s) => ({

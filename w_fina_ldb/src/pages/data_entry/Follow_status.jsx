@@ -15,6 +15,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { API_BASE_URL } from '@/config/env.config';
 import ApplicantDetailModal from '@/components/applicant/ApplicantDetailModal';
+import * as XLSX from 'xlsx-js-style';
 
 const FollowStatus = () => {
   const navigate = useNavigate();
@@ -25,8 +26,9 @@ const FollowStatus = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [statusFilter, setStatusFilter] = useState('all');
   const [applicantIdSearch, setApplicantIdSearch] = useState('');
-  // ✅ ເຫຼືອ state ວັນທີ່ດຽວ ແທນ dateFrom / dateTo
-  const [selectedDate, setSelectedDate] = useState(null);
+  // ✅ ເພີ່ມແທນ
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -65,11 +67,11 @@ const FollowStatus = () => {
       const params = { page, limit: 10 };
       if (statusFilter !== 'all') params.status = statusFilter;
       if (applicantIdSearch) params.applicant_id = applicantIdSearch;
-      // ✅ ສົ່ງ date_from ແລະ date_to ເປັນວັນດຽວກັນ ເພື່ອຄົ້ນຫາສະເພາະວັນນັ້ນ
-      if (selectedDate) {
-        const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-        params.date_from = formattedDate;
-        params.date_to = formattedDate;
+      if (startDate) {
+        params.date_from = format(startDate, 'yyyy-MM-dd');
+      }
+      if (endDate) {
+        params.date_to = format(endDate, 'yyyy-MM-dd');
       }
 
       console.log('Fetching reports with params:', params);
@@ -100,7 +102,7 @@ const FollowStatus = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter, applicantIdSearch, selectedDate]);
+  }, [page, statusFilter, applicantIdSearch, startDate, endDate]);
 
   useEffect(() => {
     fetchReports();
@@ -134,14 +136,166 @@ const FollowStatus = () => {
 
   const handleRefresh = () => {
     setApplicantIdSearch('');
-    setSelectedDate(null);
+    setDateRange([null, null]); // ✅ ປ່ຽນຈາກ setSelectedDate(null)
     setStatusFilter('all');
     setPage(1);
     fetchReports();
   };
 
+  // ⚠️ ຕ້ອງປ່ຽນ import ຢູ່ຫົວໄຟລ໌ FollowStatus.jsx ຈາກ:
+//   import * as XLSX from 'xlsx';
+// ເປັນ:
+//   import * as XLSX from 'xlsx-js-style';
+// ແລະຕິດຕັ້ງ package ກ່ອນ: npm uninstall xlsx && npm install xlsx-js-style
+
+const handleExportExcel = async () => {
+  const result = await Swal.fire({
+    icon: 'question',
+    iconColor: '#16a34a',
+    title: 'ຢືນຢັນການປີ້ນເປັນ Excel',
+    text: 'ທ່ານຕ້ອງການປີ້ນລາຍງານເປັນ Excel ແທ້ບໍ່?',
+    showCancelButton: true,
+    confirmButtonText: 'ຢືນຢັນ',
+    cancelButtonText: 'ຍົກເລີກ',
+    confirmButtonColor: '#16a34a',
+    cancelButtonColor: '#dc2626',
+    customClass: { popup: 'font-noto-sans-lao', title: 'font-bold text-lg', htmlContainer: 'text-base' },
+    reverseButtons: true,
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('ກະລຸນາເຂົ້າສູ່ລະບົບກ່ອນ');
+
+    const params = { page: 1, limit: 100000 };
+    if (statusFilter !== 'all') params.status = statusFilter;
+    if (applicantIdSearch) params.applicant_id = applicantIdSearch;
+    if (startDate) params.date_from = format(startDate, 'yyyy-MM-dd');
+    if (endDate) params.date_to = format(endDate, 'yyyy-MM-dd');
+
+    const response = await axios.get(`${API_BASE_URL}/api/data_entry_report`, {
+      headers: { Authorization: `Bearer ${token}`, 'Cache-Control': 'no-cache' },
+      params,
+    });
+
+    const allReports = response.data.data || [];
+
+    if (allReports.length === 0) {
+      Swal.fire({
+        icon: 'info',
+        title: 'ບໍ່ມີຂໍ້ມູນ',
+        text: 'ບໍ່ມີຂໍ້ມູນສຳລັບການຄົ້ນຫານີ້',
+        confirmButtonText: 'ຕົກລົງ',
+        confirmButtonColor: '#2563eb',
+      });
+      return;
+    }
+
+    const fileTypes = [
+      { key: 'customer_request_form', label: 'ແບບຟອມຂໍເປີດບັນຊີ' },
+      { key: 'request_earmark_account', label: 'ແບບຟອມອື່ນໆ' },
+      { key: 'registration_form_credit_card', label: 'ແບບຟອມລົງທະບຽນບັດ' },
+      { key: 'registration_form_gif_fina', label: 'ແບບຟອມອື່ນໆ' },
+      { key: 'file_typ_5', label: 'ແບບຟອມອື່ນໆ' },
+    ];
+
+    const baseColumns = ['ID ເອກະສານ', 'ຊື່-ນາມສະກຸນ', 'ວັນເດືອນປີເກີດ', 'ບ້ານ', 'ເມືອງ', 'ແຂວງ'];
+    const tailColumns = ['ສະຖານະ', 'ວັນທີ່ອັບເດດ', 'ເຫດຜົນປະຕິເສດ'];
+
+    // ✅ ແຖວ header — ບໍ່ອີງໃສ່ object key, ຈຶ່ງບໍ່ມີບັນຫາຊື່ຊ້ຳກັນ
+    const headerRow = [...baseColumns, ...fileTypes.map((ft) => ft.label), ...tailColumns];
+
+    // ✅ ແຖວຂໍ້ມູນ (array ຂອງ array, ລຳດັບຄໍລຳຄົງທີ່ສະເໝີ)
+    const dataRows = allReports.map((report) => {
+      const baseValues = [
+        report.applicant_id,
+        `${report.applicant_name} ${report.applicant_surname}`,
+        formatDate(report.dob),
+        report.village || '-',
+        report.district_name || '-',
+        report.province_name || '-',
+      ];
+      const fileValues = fileTypes.map((ft) =>
+        report.files?.some((f) => f.file_type === ft.key) ? 'ມີ' : '-'
+      );
+      const tailValues = [
+        formatStatus(report.status),
+        formatDate(report.updated_at),
+        report.status === 'rejected' ? (report.last_rejected_feedback || '-') : '-',
+      ];
+      return [...baseValues, ...fileValues, ...tailValues];
+    });
+
+    const worksheet = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
+
+    // ✅ ໃສ່ສີພື້ນຂຽວ + ໂຕໜັງສືສີຂາວ ໃຫ້ header row (ແຖວທີ 1)
+    const headerStyle = {
+      fill: { fgColor: { rgb: '16A34A' } },
+      font: { bold: true, color: { rgb: 'FFFFFF' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+    };
+    headerRow.forEach((_, colIndex) => {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: colIndex });
+      if (worksheet[cellRef]) {
+        worksheet[cellRef].s = headerStyle;
+      }
+    });
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'ລາຍງານ');
+
+    // ✅ ໃສ່ hyperlink — ຕຳແໜ່ງຄໍລຳຄິດຈາກ baseColumns.length ສະເໝີ ບໍ່ມີວັນຜິດພາດ
+    const firstFileColIndex = baseColumns.length; // = 6 → G
+
+    allReports.forEach((report, i) => {
+      const rowNum = i + 2;
+      fileTypes.forEach((ft, idx) => {
+        const file = report.files?.find((f) => f.file_type === ft.key);
+        const colIndex = firstFileColIndex + idx;
+        const cellRef = XLSX.utils.encode_cell({ r: rowNum - 1, c: colIndex });
+        if (file) {
+          const fileUrl = `${API_BASE_URL}/${file.file_path}`;
+          worksheet[cellRef] = {
+            t: 's',
+            v: 'ເປີດເອກະສານ',
+            l: { Target: fileUrl, Tooltip: ft.label },
+            s: {
+              font: { color: { rgb: '2563EB' }, underline: true },
+            },
+          };
+        }
+      });
+    });
+
+    worksheet['!cols'] = [
+      { wch: 12 }, { wch: 25 }, { wch: 14 }, { wch: 15 }, { wch: 15 }, { wch: 15 },
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 },
+      { wch: 15 }, { wch: 14 }, { wch: 30 },
+    ];
+
+    const fileName = `ລາຍງານການຕິດຕາມ_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+
+  } catch (err) {
+    console.error('Error exporting excel:', err);
+    Swal.fire({
+      icon: 'error',
+      title: 'ຂໍ້ຜິດພາດ',
+      text: 'ບໍ່ສາມາດປີ້ນເປັນ Excel ໄດ້',
+      confirmButtonText: 'ຕົກລົງ',
+      confirmButtonColor: '#2563eb',
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   const clearDate = () => {
-    setSelectedDate(null);
+    setDateRange([null, null]); // ✅ ປ່ຽນຈາກ setSelectedDate(null)
     setPage(1);
   };
 
@@ -157,10 +311,10 @@ const FollowStatus = () => {
   const formatFileType = (fileType) => {
     switch (fileType) {
       case 'customer_request_form': return 'ແບບຟອມຂໍເປີດບັນຊີ - ສ່ວນບຸກຄົນ';
-      case 'request_earmark_account': return 'ໃບສະເໜີຂໍ Block ບັນຊີ';
+      case 'request_earmark_account': return 'ແບບຟອມອື່ນໆ';
       case 'registration_form_credit_card': return 'ແບບຟອມລົງທະບຽນຂໍນຳໃຊ້ບັດສາກົນ';
-      case 'registration_form_gif_fina': return 'ແບບຟອມສັນຍານໍາໃຊ້ບັດສາກົນ';
-      case 'file_typ_5': return 'ຄໍາແນະນໍາ ແລະ ເງື່ອນໄຂການນໍາໃຊ້ ບັດສາກົນ ແລະ ສັນຍານໍາໃຊ້ບັດສາກົນ';
+      case 'registration_form_gif_fina': return 'ແບບຟອມອື່ນໆ';
+      case 'file_typ_5': return 'ແບບຟອມອື່ນໆ';
 
 
       default: return fileType || '-';
@@ -229,18 +383,21 @@ const FollowStatus = () => {
                 placeholder="ຄົ້ນຫາ ID ຜູ້ສະໝັກ"
                 value={applicantIdSearch}
                 onChange={handleApplicantIdSearch}
-                className="w-full sm:w-48 h-10 border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao"
+                className="w-full sm:w-64 h-10 border border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao focus:outline-none focus:ring-2 focus:ring-blue-400"
               />
-              {/* ✅ ຊ່ອງວັນທີ່ດຽວ ແທນ 2 ຊ່ອງ (ວັນທີ່ຈາກ / ວັນທີ່ຫາ) */}
-              <div className="relative flex items-center">
+              {/* ✅ ຊ່ອງເລືອກຊ່ວງວັນທີ່ (ຈາກ - ຫາ) */}
+              <div className="relative flex items-center ">
                 <DatePicker
-                  selected={selectedDate}
-                  onChange={(date) => setSelectedDate(date)}
+                  selectsRange={true}          // ✅ ເປີດໂໝດ range
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={(update) => setDateRange(update)} // update = [start, end]
                   dateFormat="dd/MM/yyyy"
-                  placeholderText="ຄົ້ນຫາຕາມວັນທີ່ (dd/mm/yyyy)"
-                  className="w-full sm:w-48 h-10 border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao"
+                  placeholderText="ຄົ້ນຫາຊ່ວງວັນທີ່ (ຈາກ - ຫາ)"
+                  isClearable={false}
+                  className="w-full sm:w-64 h-10 border border-blue-500 rounded-md px-3 py-2 font-noto-sans-lao focus:outline-none focus:ring-2 focus:ring-blue-400"
                 />
-                {selectedDate && (
+                {(startDate || endDate) && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -260,6 +417,30 @@ const FollowStatus = () => {
                 <RefreshCcw className="h-5 w-5" />
               </Button>
             </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                onClick={handleExportExcel}
+                disabled={loading}
+                className="bg-green-600 hover:bg-green-700 text-white rounded-md"
+              >
+                ປີ້ຼນເປັນ Exel
+              </Button>
+              <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
+                <SelectTrigger className="w-full sm:w-48 h-10 border-blue-500 rounded-md font-noto-sans-lao" aria-label="ກັ່ນຕອງຕາມສະຖານະ">
+                  <SelectValue placeholder="ກັ່ນຕອງຕາມສະຖານະ" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {/* <Button className="bg-green-600 hover:bg-green-700 text-white rounded-md">
+              ປີ້ຼນເປັນ Exel
+            </Button>
             <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
               <SelectTrigger className="w-full sm:w-48 h-10 border-blue-500 rounded-md font-noto-sans-lao" aria-label="ກັ່ນຕອງຕາມສະຖານະ">
                 <SelectValue placeholder="ກັ່ນຕອງຕາມສະຖານະ" />
@@ -271,7 +452,7 @@ const FollowStatus = () => {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
           </div>
 
           {loading ? (

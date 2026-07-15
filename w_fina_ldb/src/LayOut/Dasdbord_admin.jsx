@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { ClipboardList, Briefcase, User, LogOut, Menu, X } from 'lucide-react';
 import {
   Dialog,
@@ -94,12 +95,26 @@ const Dasdbord_admin = () => {
     if (employee && employee.name) setUserName(employee.name);
   }, []);
 
+  // const handleLogout = () => setIsLogoutDialogOpen(true);
+  // const confirmLogout = () => {
+  //   localStorage.removeItem('employee');
+  //   localStorage.removeItem('token');
+  //   setIsLogoutDialogOpen(false);
+  //   navigate('/');
+  // };
+  const { logout } = useAuth(); // ✅ ດຶງມາໃຊ້
+
   const handleLogout = () => setIsLogoutDialogOpen(true);
-  const confirmLogout = () => {
-    localStorage.removeItem('employee');
-    localStorage.removeItem('token');
+
+  const confirmLogout = async () => {
+    await logout(); // ✅ ຮ້ອງຜ່ານ hook (ຈະ redirect ໄປໜ້າ login ໃຫ້ອັດຕະໂນມັດ)
+
+    // ✅ ຍັງລຶບ receiver token ເພີ່ມ ຖ້າ role ນັ້ນມີ storage ແຍກຕ່າງຫາກ
+    sessionStorage.removeItem('receiver_token');
+    sessionStorage.removeItem('receiver_employee');
+
     setIsLogoutDialogOpen(false);
-    navigate('/');
+    // ✅ ບໍ່ຈຳເປັນຕ້ອງ navigate('/') ຊ້ຳອີກ ເພາະ logout() ໃນ useAuth navigate ໄປ ROUTES.LOGIN ໃຫ້ແລ້ວ
   };
   const cancelLogout = () => setIsLogoutDialogOpen(false);
 
@@ -121,10 +136,9 @@ const Dasdbord_admin = () => {
               to=""
               end
               className={({ isActive }) =>
-                `px-6 py-3 rounded-lg font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-gray-600 bg-gray-200 hover:bg-gray-300'
+                `px-6 py-3 rounded-lg font-semibold transition-colors ${isActive
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-600 bg-gray-200 hover:bg-gray-300'
                 }`
               }
             >
@@ -134,10 +148,9 @@ const Dasdbord_admin = () => {
             <NavLink
               to="management"
               className={({ isActive }) =>
-                `px-6 py-3 rounded-lg font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'text-gray-600 bg-gray-200 hover:bg-gray-300'
+                `px-6 py-3 rounded-lg font-semibold transition-colors ${isActive
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'text-gray-600 bg-gray-200 hover:bg-gray-300'
                 }`
               }
             >
@@ -166,10 +179,9 @@ const Dasdbord_admin = () => {
               end
               onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
+                `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-colors ${isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
                 }`
               }
             >
@@ -180,10 +192,9 @@ const Dasdbord_admin = () => {
               to="management"
               onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-colors ${
-                  isActive
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
+                `flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-colors ${isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
                 }`
               }
             >

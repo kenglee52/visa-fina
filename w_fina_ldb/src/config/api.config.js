@@ -57,6 +57,10 @@ export const API_ENDPOINTS = {
   CREATE_DISTRICT: '/api/districts',
   UPDATE_DISTRICT: '/api/districts/:id',
   DELETE_DISTRICT: '/api/districts/:id',
+  
+  //Employee
+  LOGOUT: '/api/logout', // ✅ ເພີ່ມ (ປັບ path ໃຫ້ກົງກັບ base url ຈິງ)
+  HEARTBEAT: '/api/heartbeat', // ✅ ເພີ່ມ
 };
 
 // Helper function to replace path parameters

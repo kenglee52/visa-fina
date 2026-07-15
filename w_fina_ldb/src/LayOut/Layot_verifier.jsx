@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
 import { API_BASE_URL } from '@/config/env.config';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 // ========== Confirm Logout Dialog ==========
 const ConfirmLogoutDialog = ({ open, onConfirm, onCancel }) => (
@@ -60,22 +61,23 @@ const ReceiverLoginDialog = ({ open, onClose, onSuccess }) => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/login`, {
+      const response = await axios.post(`${API_BASE_URL}/api/verify-receiver-password`, {
         id: receiverId,
         password: receiverPassword,
+        requiredRole: 'receiver', // ✅ ໃຫ້ backend ກວດ role ໃຫ້ນຳ
       });
 
-      const { token, employee } = response.data.data || response.data;
+      // const { employee } = response.data.data || response.data;
 
-      if (employee?.role !== 'receiver') {
-        setError('ໜ້ານີ້ສຳລັບ Receiver ເທົ່ານັ້ນ — ບັນຊີຂອງທ່ານບໍ່ມີສິດເຂົ້າໃຊ້');
-        setLoading(false);
-        return;
-      }
+      // if (employee?.role !== 'receiver') {
+      //   setError('ໜ້ານີ້ສຳລັບ Receiver ເທົ່ານັ້ນ — ບັນຊີຂອງທ່ານບໍ່ມີສິດເຂົ້າໃຊ້');
+      //   setLoading(false);
+      //   return;
+      // }
 
-      // Store receiver session separately (don't overwrite the current verifier session)
-      sessionStorage.setItem('receiver_token', token);
-      sessionStorage.setItem('receiver_employee', JSON.stringify(employee));
+      // // Store receiver session separately (don't overwrite the current verifier session)
+      // sessionStorage.setItem('receiver_token', token);
+      // sessionStorage.setItem('receiver_employee', JSON.stringify(employee));
 
       handleClose();
       onSuccess();
@@ -251,14 +253,28 @@ const Layout_verifier = () => {
     }
   }, [location.pathname]);
 
+  // const handleLogout = () => setIsLogoutDialogOpen(true);
+  // const confirmLogout = () => {
+  //   localStorage.removeItem('employee');
+  //   localStorage.removeItem('token');
+  //   sessionStorage.removeItem('receiver_token');
+  //   sessionStorage.removeItem('receiver_employee');
+  //   setIsLogoutDialogOpen(false);
+  //   navigate('/', { replace: true });
+  // };
+  const { logout } = useAuth(); // ✅ ດຶງມາໃຊ້
+
   const handleLogout = () => setIsLogoutDialogOpen(true);
-  const confirmLogout = () => {
-    localStorage.removeItem('employee');
-    localStorage.removeItem('token');
+
+  const confirmLogout = async () => {
+    await logout(); // ✅ ຮ້ອງຜ່ານ hook (ຈະ redirect ໄປໜ້າ login ໃຫ້ອັດຕະໂນມັດ)
+
+    // ✅ ຍັງລຶບ receiver token ເພີ່ມ ຖ້າ role ນັ້ນມີ storage ແຍກຕ່າງຫາກ
     sessionStorage.removeItem('receiver_token');
     sessionStorage.removeItem('receiver_employee');
+
     setIsLogoutDialogOpen(false);
-    navigate('/', { replace: true });
+    // ✅ ບໍ່ຈຳເປັນຕ້ອງ navigate('/') ຊ້ຳອີກ ເພາະ logout() ໃນ useAuth navigate ໄປ ROUTES.LOGIN ໃຫ້ແລ້ວ
   };
   const cancelLogout = () => setIsLogoutDialogOpen(false);
 

@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ClipboardList, Briefcase, User, LogOut, Menu, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 const ConfirmLogoutDialog = ({ open, onConfirm, onCancel }) => {
   const handleOpenChange = (isOpen) => {
@@ -90,12 +91,26 @@ const Layout_data_entry = () => {
     }
   }, []);
 
+  // const handleLogout = () => setIsLogoutDialogOpen(true);
+  // const confirmLogout = () => {
+  //   localStorage.removeItem('employee');
+  //   localStorage.removeItem('token');
+  //   setIsLogoutDialogOpen(false);
+  //   navigate('/');
+  // };
+  const { logout } = useAuth(); // ✅ ດຶງມາໃຊ້
+
   const handleLogout = () => setIsLogoutDialogOpen(true);
-  const confirmLogout = () => {
-    localStorage.removeItem('employee');
-    localStorage.removeItem('token');
+
+  const confirmLogout = async () => {
+    await logout(); // ✅ ຮ້ອງຜ່ານ hook (ຈະ redirect ໄປໜ້າ login ໃຫ້ອັດຕະໂນມັດ)
+
+    // ✅ ຍັງລຶບ receiver token ເພີ່ມ ຖ້າ role ນັ້ນມີ storage ແຍກຕ່າງຫາກ
+    sessionStorage.removeItem('receiver_token');
+    sessionStorage.removeItem('receiver_employee');
+
     setIsLogoutDialogOpen(false);
-    navigate('/');
+    // ✅ ບໍ່ຈຳເປັນຕ້ອງ navigate('/') ຊ້ຳອີກ ເພາະ logout() ໃນ useAuth navigate ໄປ ROUTES.LOGIN ໃຫ້ແລ້ວ
   };
   const cancelLogout = () => setIsLogoutDialogOpen(false);
 
