@@ -3,7 +3,7 @@
  * Handles login, logout, and user authentication
  */
 import axiosInstance from './axiosInstance';
-import { API_ENDPOINTS, buildUrl } from '@/config/api.config';
+import { API_ENDPOINTS} from '@/config/api.config';
 import { STORAGE_KEYS } from '@/config/constants';
 
 export const authAPI = {
